@@ -1,0 +1,6 @@
+*.o
+*.ppu
+*.exe
+*.cached_sys
+/lib/*
+/backup/*

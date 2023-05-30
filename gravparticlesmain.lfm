@@ -1,0 +1,407 @@
+object GravityMainForm: TGravityMainForm
+  Left = 1696
+  Height = 734
+  Top = 280
+  Width = 830
+  Caption = 'Gravity'
+  ClientHeight = 734
+  ClientWidth = 830
+  Color = 3158064
+  Font.Color = 14145495
+  OnCreate = FormCreate
+  OnDestroy = FormDestroy
+  LCLVersion = '2.2.2.0'
+  object OpenGLControl1: TOpenGLControl
+    Left = 0
+    Height = 734
+    Top = 0
+    Width = 830
+    Align = alClient
+  end
+  object Panel1: TPanel
+    Left = 0
+    Height = 368
+    Top = 0
+    Width = 216
+    BevelOuter = bvNone
+    ClientHeight = 368
+    ClientWidth = 216
+    TabOrder = 1
+    object Panel2: TPanel
+      AnchorSideLeft.Control = Panel1
+      AnchorSideTop.Control = Panel1
+      AnchorSideRight.Control = Panel1
+      AnchorSideRight.Side = asrBottom
+      Left = 3
+      Height = 47
+      Top = 3
+      Width = 210
+      Anchors = [akTop, akLeft, akRight]
+      AutoSize = True
+      BorderSpacing.Left = 3
+      BorderSpacing.Top = 3
+      BorderSpacing.Right = 3
+      BevelColor = 8750469
+      BevelOuter = bvLowered
+      BorderWidth = 1
+      ClientHeight = 47
+      ClientWidth = 210
+      TabOrder = 0
+      object Label1: TLabel
+        AnchorSideLeft.Control = Panel2
+        AnchorSideTop.Control = Panel2
+        Left = 2
+        Height = 15
+        Top = 2
+        Width = 32
+        Caption = 'Speed'
+        ParentColor = False
+      end
+      object SpeedTrackBar: TTrackBar
+        AnchorSideLeft.Control = Panel2
+        AnchorSideTop.Control = Label1
+        AnchorSideTop.Side = asrBottom
+        AnchorSideRight.Control = Panel2
+        AnchorSideRight.Side = asrBottom
+        Left = 5
+        Height = 25
+        Top = 17
+        Width = 200
+        Frequency = 10
+        Max = 100
+        OnChange = SpeedTrackBarChange
+        PageSize = 10
+        Position = 0
+        ShowSelRange = False
+        Anchors = [akTop, akLeft, akRight]
+        BorderSpacing.Left = 3
+        BorderSpacing.Right = 3
+        BorderSpacing.Bottom = 3
+        TabOrder = 0
+      end
+    end
+    object Panel3: TPanel
+      AnchorSideLeft.Control = Panel1
+      AnchorSideTop.Control = Panel2
+      AnchorSideTop.Side = asrBottom
+      AnchorSideRight.Control = Panel1
+      AnchorSideRight.Side = asrBottom
+      Left = 3
+      Height = 103
+      Top = 53
+      Width = 210
+      Anchors = [akTop, akLeft, akRight]
+      AutoSize = True
+      BorderSpacing.Left = 3
+      BorderSpacing.Top = 3
+      BorderSpacing.Right = 3
+      BevelColor = 8750469
+      BevelOuter = bvLowered
+      BorderWidth = 1
+      ClientHeight = 103
+      ClientWidth = 210
+      TabOrder = 1
+      object starsLabel: TLabel
+        AnchorSideLeft.Control = Panel3
+        AnchorSideTop.Control = Panel3
+        Left = 2
+        Height = 15
+        Top = 2
+        Width = 37
+        Caption = 'Stars: 1'
+        ParentColor = False
+      end
+      object StarsTrackBar: TTrackBar
+        AnchorSideLeft.Control = Panel3
+        AnchorSideTop.Control = starsLabel
+        AnchorSideTop.Side = asrBottom
+        AnchorSideRight.Control = Panel3
+        AnchorSideRight.Side = asrBottom
+        Left = 5
+        Height = 25
+        Top = 17
+        Width = 200
+        Max = 5
+        Min = 1
+        OnChange = StarsTrackBarChange
+        PageSize = 1
+        Position = 1
+        ShowSelRange = False
+        Anchors = [akTop, akLeft, akRight]
+        BorderSpacing.Left = 3
+        BorderSpacing.Right = 3
+        BorderSpacing.Bottom = 3
+        TabOrder = 0
+      end
+      object initStarsButton: TButton
+        AnchorSideLeft.Control = Panel3
+        AnchorSideTop.Control = StarsTrackBar
+        AnchorSideTop.Side = asrBottom
+        AnchorSideRight.Control = Panel3
+        AnchorSideRight.Side = asrBottom
+        Left = 5
+        Height = 25
+        Top = 45
+        Width = 200
+        Anchors = [akTop, akLeft, akRight]
+        BorderSpacing.Left = 3
+        BorderSpacing.Top = 3
+        BorderSpacing.Right = 3
+        BorderSpacing.Bottom = 3
+        Caption = 'randomize'
+        OnClick = initStarsButtonClick
+        TabOrder = 1
+      end
+      object resetStarsButton: TButton
+        AnchorSideLeft.Control = Panel3
+        AnchorSideTop.Control = initStarsButton
+        AnchorSideTop.Side = asrBottom
+        AnchorSideRight.Control = Panel3
+        AnchorSideRight.Side = asrBottom
+        Left = 5
+        Height = 25
+        Top = 73
+        Width = 200
+        Anchors = [akTop, akLeft, akRight]
+        BorderSpacing.Left = 3
+        BorderSpacing.Top = 3
+        BorderSpacing.Right = 3
+        BorderSpacing.Bottom = 3
+        Caption = 'reset'
+        OnClick = resetStarsButtonClick
+        TabOrder = 2
+      end
+    end
+    object Panel4: TPanel
+      AnchorSideLeft.Control = Panel1
+      AnchorSideTop.Control = Panel3
+      AnchorSideTop.Side = asrBottom
+      AnchorSideRight.Control = Panel1
+      AnchorSideRight.Side = asrBottom
+      Left = 3
+      Height = 141
+      Top = 159
+      Width = 210
+      Anchors = [akTop, akLeft, akRight]
+      AutoSize = True
+      BorderSpacing.Left = 3
+      BorderSpacing.Top = 3
+      BorderSpacing.Right = 3
+      BevelColor = 8750469
+      BevelOuter = bvLowered
+      BorderWidth = 1
+      ClientHeight = 141
+      ClientWidth = 210
+      TabOrder = 2
+      object dustLabel: TLabel
+        AnchorSideLeft.Control = Panel4
+        AnchorSideTop.Control = Panel4
+        Left = 2
+        Height = 15
+        Top = 2
+        Width = 36
+        Caption = 'Dust: 1'
+        ParentColor = False
+      end
+      object DustTrackBar: TTrackBar
+        AnchorSideLeft.Control = Panel4
+        AnchorSideTop.Control = dustLabel
+        AnchorSideTop.Side = asrBottom
+        AnchorSideRight.Control = Panel4
+        AnchorSideRight.Side = asrBottom
+        Left = 5
+        Height = 25
+        Top = 17
+        Width = 200
+        Frequency = 10
+        Max = 100
+        OnChange = DustTrackBarChange
+        PageSize = 1
+        Position = 0
+        ShowSelRange = False
+        Anchors = [akTop, akLeft, akRight]
+        BorderSpacing.Left = 3
+        BorderSpacing.Right = 3
+        BorderSpacing.Bottom = 3
+        TabOrder = 0
+      end
+      object ComboBox1: TComboBox
+        AnchorSideLeft.Control = Panel4
+        AnchorSideTop.Control = dustRemainingLabel
+        AnchorSideTop.Side = asrBottom
+        AnchorSideRight.Control = Panel4
+        AnchorSideRight.Side = asrBottom
+        Left = 5
+        Height = 23
+        Top = 63
+        Width = 200
+        Anchors = [akTop, akLeft, akRight]
+        BorderSpacing.Left = 3
+        BorderSpacing.Top = 3
+        BorderSpacing.Right = 3
+        Constraints.MinWidth = 200
+        ItemHeight = 15
+        ItemIndex = 0
+        Items.Strings = (
+          'Stable Disks around stars'
+          'Stable Clouds around stars'
+          'Random Clouds around stars'
+          'Background dust'
+        )
+        OnSelect = ComboBox1Select
+        Style = csDropDownList
+        TabOrder = 1
+        Text = 'Stable Disks around stars'
+      end
+      object Label2: TLabel
+        AnchorSideLeft.Control = Panel4
+        AnchorSideTop.Control = ComboBox1
+        AnchorSideTop.Side = asrBottom
+        Left = 5
+        Height = 15
+        Top = 89
+        Width = 52
+        BorderSpacing.Left = 3
+        BorderSpacing.Top = 3
+        Caption = 'Pick stars:'
+        ParentColor = False
+      end
+      object CheckBox1: TCheckBox
+        AnchorSideLeft.Control = Label2
+        AnchorSideLeft.Side = asrBottom
+        AnchorSideTop.Control = ComboBox1
+        AnchorSideTop.Side = asrBottom
+        Left = 60
+        Height = 19
+        Top = 89
+        Width = 20
+        BorderSpacing.Left = 3
+        BorderSpacing.Top = 3
+        TabOrder = 2
+      end
+      object CheckBox2: TCheckBox
+        AnchorSideLeft.Control = CheckBox1
+        AnchorSideLeft.Side = asrBottom
+        AnchorSideTop.Control = ComboBox1
+        AnchorSideTop.Side = asrBottom
+        Left = 83
+        Height = 19
+        Top = 89
+        Width = 20
+        BorderSpacing.Left = 3
+        BorderSpacing.Top = 3
+        TabOrder = 3
+      end
+      object CheckBox3: TCheckBox
+        AnchorSideLeft.Control = CheckBox2
+        AnchorSideLeft.Side = asrBottom
+        AnchorSideTop.Control = ComboBox1
+        AnchorSideTop.Side = asrBottom
+        Left = 106
+        Height = 19
+        Top = 89
+        Width = 20
+        BorderSpacing.Left = 3
+        BorderSpacing.Top = 3
+        TabOrder = 4
+      end
+      object CheckBox4: TCheckBox
+        AnchorSideLeft.Control = CheckBox3
+        AnchorSideLeft.Side = asrBottom
+        AnchorSideTop.Control = ComboBox1
+        AnchorSideTop.Side = asrBottom
+        Left = 129
+        Height = 19
+        Top = 89
+        Width = 20
+        BorderSpacing.Left = 3
+        BorderSpacing.Top = 3
+        TabOrder = 5
+      end
+      object CheckBox5: TCheckBox
+        AnchorSideLeft.Control = CheckBox4
+        AnchorSideLeft.Side = asrBottom
+        AnchorSideTop.Control = ComboBox1
+        AnchorSideTop.Side = asrBottom
+        Left = 152
+        Height = 19
+        Top = 89
+        Width = 20
+        BorderSpacing.Left = 3
+        BorderSpacing.Top = 3
+        TabOrder = 6
+      end
+      object initDustButton: TButton
+        AnchorSideLeft.Control = Panel4
+        AnchorSideTop.Control = CheckBox1
+        AnchorSideTop.Side = asrBottom
+        AnchorSideRight.Control = Panel4
+        AnchorSideRight.Side = asrBottom
+        Left = 5
+        Height = 25
+        Top = 111
+        Width = 200
+        Anchors = [akTop, akLeft, akRight]
+        BorderSpacing.Left = 3
+        BorderSpacing.Top = 3
+        BorderSpacing.Right = 3
+        BorderSpacing.Bottom = 3
+        Caption = 'set'
+        OnClick = initDustButtonClick
+        TabOrder = 7
+      end
+      object dustRemainingLabel: TLabel
+        AnchorSideTop.Control = DustTrackBar
+        AnchorSideTop.Side = asrBottom
+        Left = 2
+        Height = 15
+        Top = 45
+        Width = 108
+        Caption = 'dustRemainingLabel'
+        ParentColor = False
+      end
+    end
+    object AutoRotateLabel: TLabel
+      AnchorSideLeft.Control = AutoRotateCheckbox
+      AnchorSideLeft.Side = asrBottom
+      AnchorSideTop.Control = AutoRotateCheckbox
+      AnchorSideTop.Side = asrCenter
+      Left = 26
+      Height = 15
+      Top = 305
+      Width = 65
+      BorderSpacing.Left = 3
+      BorderSpacing.Top = 3
+      Caption = 'Auto-Rotate'
+      ParentColor = False
+    end
+    object AutoRotateCheckbox: TCheckBox
+      AnchorSideLeft.Control = Panel1
+      AnchorSideTop.Control = Panel4
+      AnchorSideTop.Side = asrBottom
+      Left = 3
+      Height = 19
+      Top = 303
+      Width = 20
+      BorderSpacing.Left = 3
+      BorderSpacing.Top = 3
+      OnChange = AutoRotateCheckboxChange
+      TabOrder = 3
+    end
+    object FPS_LABEL: TLabel
+      AnchorSideRight.Control = Panel1
+      AnchorSideRight.Side = asrBottom
+      AnchorSideBottom.Control = Panel1
+      AnchorSideBottom.Side = asrBottom
+      Left = 156
+      Height = 15
+      Top = 350
+      Width = 57
+      Anchors = [akRight, akBottom]
+      BorderSpacing.Right = 3
+      BorderSpacing.Bottom = 3
+      Caption = 'FPS_LABEL'
+      ParentColor = False
+    end
+  end
+end
