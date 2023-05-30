@@ -4,3 +4,4 @@
 *.cached_sys
 /lib/*
 /backup/*
+*.lps

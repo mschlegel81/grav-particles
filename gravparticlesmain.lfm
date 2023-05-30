@@ -1,7 +1,7 @@
 object GravityMainForm: TGravityMainForm
-  Left = 1696
+  Left = 226
   Height = 734
-  Top = 280
+  Top = 59
   Width = 830
   Caption = 'Gravity'
   ClientHeight = 734
@@ -10,7 +10,9 @@ object GravityMainForm: TGravityMainForm
   Font.Color = 14145495
   OnCreate = FormCreate
   OnDestroy = FormDestroy
+  Position = poScreenCenter
   LCLVersion = '2.2.2.0'
+  WindowState = wsMaximized
   object OpenGLControl1: TOpenGLControl
     Left = 0
     Height = 734
