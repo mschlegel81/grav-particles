@@ -8,11 +8,9 @@
       <Unit>
         <Filename Value="gravityMain.lpr"/>
         <IsPartOfProject Value="True"/>
-        <IsVisibleTab Value="True"/>
-        <EditorIndex Value="1"/>
-        <TopLine Value="3"/>
-        <CursorPos X="66" Y="15"/>
-        <UsageCount Value="90"/>
+        <EditorIndex Value="2"/>
+        <CursorPos X="90" Y="22"/>
+        <UsageCount Value="140"/>
         <Loaded Value="True"/>
       </Unit>
       <Unit>
@@ -22,9 +20,9 @@
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
         <UnitName Value="gravParticlesMain"/>
-        <TopLine Value="68"/>
-        <CursorPos X="68" Y="87"/>
-        <UsageCount Value="90"/>
+        <TopLine Value="56"/>
+        <CursorPos X="81" Y="94"/>
+        <UsageCount Value="140"/>
         <Loaded Value="True"/>
         <LoadedDesigner Value="True"/>
       </Unit>
@@ -32,10 +30,10 @@
         <Filename Value="viewwrapper.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="viewWrapper"/>
-        <EditorIndex Value="2"/>
-        <TopLine Value="274"/>
-        <CursorPos X="50" Y="294"/>
-        <UsageCount Value="90"/>
+        <EditorIndex Value="3"/>
+        <TopLine Value="23"/>
+        <CursorPos X="17" Y="55"/>
+        <UsageCount Value="140"/>
         <Loaded Value="True"/>
       </Unit>
       <Unit>
@@ -47,25 +45,27 @@
         <EditorIndex Value="-1"/>
         <TopLine Value="29"/>
         <CursorPos X="36" Y="54"/>
-        <UsageCount Value="70"/>
+        <UsageCount Value="66"/>
       </Unit>
       <Unit>
         <Filename Value="particlephysics.pas"/>
         <UnitName Value="particlePhysics"/>
-        <EditorIndex Value="3"/>
-        <TopLine Value="282"/>
-        <CursorPos X="65" Y="285"/>
-        <UsageCount Value="44"/>
-        <Bookmarks Count="1">
-          <Item0 Y="326" ID="1"/>
+        <IsVisibleTab Value="True"/>
+        <EditorIndex Value="4"/>
+        <TopLine Value="598"/>
+        <CursorPos X="14" Y="636"/>
+        <UsageCount Value="70"/>
+        <Bookmarks Count="2">
+          <Item0 X="31" Y="257" ID="2"/>
+          <Item1 X="22" Y="785" ID="1"/>
         </Bookmarks>
         <Loaded Value="True"/>
       </Unit>
       <Unit>
         <Filename Value="vectors.pas"/>
-        <EditorIndex Value="4"/>
+        <EditorIndex Value="5"/>
         <CursorPos X="20" Y="12"/>
-        <UsageCount Value="44"/>
+        <UsageCount Value="70"/>
         <Loaded Value="True"/>
       </Unit>
       <Unit>
@@ -73,138 +73,143 @@
         <EditorIndex Value="-1"/>
         <TopLine Value="241"/>
         <CursorPos X="49" Y="258"/>
-        <UsageCount Value="36"/>
+        <UsageCount Value="32"/>
       </Unit>
       <Unit>
         <Filename Value="..\lazarus64\fpc\3.2.2\source\packages\opengl\src\gl.pp"/>
         <UnitName Value="GL"/>
-        <EditorIndex Value="5"/>
+        <EditorIndex Value="6"/>
         <TopLine Value="767"/>
         <CursorPos X="3" Y="799"/>
-        <UsageCount Value="10"/>
+        <UsageCount Value="36"/>
+        <Loaded Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="..\lazarus64\fpc\3.2.2\source\rtl\objpas\sysutils\sysstrh.inc"/>
+        <EditorIndex Value="1"/>
+        <CursorPos X="50" Y="26"/>
+        <UsageCount Value="25"/>
         <Loaded Value="True"/>
       </Unit>
     </Units>
     <JumpHistory HistoryIndex="29">
       <Position>
-        <Filename Value="vectors.pas"/>
-        <Caret Line="23" Column="125"/>
-      </Position>
-      <Position>
-        <Filename Value="gravparticlesmain.pas"/>
-        <Caret Line="106" Column="98" TopLine="86"/>
-      </Position>
-      <Position>
-        <Filename Value="gravparticlesmain.pas"/>
-        <Caret Line="127" Column="5" TopLine="86"/>
+        <Filename Value="particlephysics.pas"/>
+        <Caret Line="247" Column="13" TopLine="228"/>
       </Position>
       <Position>
         <Filename Value="particlephysics.pas"/>
-        <Caret Line="45" Column="27" TopLine="8"/>
+        <Caret Line="249" Column="15" TopLine="228"/>
       </Position>
       <Position>
         <Filename Value="particlephysics.pas"/>
-        <Caret Line="258" Column="25" TopLine="196"/>
+        <Caret Line="259" Column="28" TopLine="228"/>
       </Position>
       <Position>
         <Filename Value="particlephysics.pas"/>
-        <Caret Line="533" TopLine="489"/>
+        <Caret Line="249" Column="11" TopLine="228"/>
       </Position>
       <Position>
         <Filename Value="particlephysics.pas"/>
-        <Caret Line="74" Column="26" TopLine="39"/>
+        <Caret Line="265" Column="61" TopLine="228"/>
       </Position>
       <Position>
         <Filename Value="particlephysics.pas"/>
-        <Caret Line="550" Column="43" TopLine="495"/>
+        <Caret Line="454" Column="20" TopLine="395"/>
       </Position>
       <Position>
         <Filename Value="particlephysics.pas"/>
-        <Caret Line="69" Column="15" TopLine="41"/>
-      </Position>
-      <Position>
-        <Filename Value="gravparticlesmain.pas"/>
-        <Caret Line="128" Column="5" TopLine="87"/>
-      </Position>
-      <Position>
-        <Filename Value="viewwrapper.pas"/>
-        <Caret Line="57" Column="71" TopLine="35"/>
-      </Position>
-      <Position>
-        <Filename Value="viewwrapper.pas"/>
-        <Caret Line="294" Column="50" TopLine="237"/>
+        <Caret Line="288" Column="48" TopLine="234"/>
       </Position>
       <Position>
         <Filename Value="particlephysics.pas"/>
-        <Caret Line="432" Column="99" TopLine="418"/>
+        <Caret Line="284" Column="45" TopLine="260"/>
       </Position>
       <Position>
         <Filename Value="particlephysics.pas"/>
-        <Caret Line="443" TopLine="399"/>
+        <Caret Line="80" Column="41" TopLine="34"/>
       </Position>
       <Position>
         <Filename Value="particlephysics.pas"/>
-        <Caret Line="45" Column="24"/>
+        <Caret Line="788" Column="16" TopLine="736"/>
       </Position>
       <Position>
         <Filename Value="particlephysics.pas"/>
-        <Caret Line="183" Column="41" TopLine="147"/>
+        <Caret Line="60" Column="20" TopLine="25"/>
       </Position>
       <Position>
         <Filename Value="particlephysics.pas"/>
-        <Caret Line="74" Column="18" TopLine="19"/>
+        <Caret Line="791" Column="63" TopLine="740"/>
       </Position>
       <Position>
         <Filename Value="particlephysics.pas"/>
-        <Caret Line="550" Column="17" TopLine="498"/>
+        <Caret Line="778" Column="24" TopLine="734"/>
       </Position>
       <Position>
         <Filename Value="particlephysics.pas"/>
-        <Caret Line="60" Column="15" TopLine="41"/>
+        <Caret Line="755" Column="90" TopLine="743"/>
       </Position>
       <Position>
         <Filename Value="particlephysics.pas"/>
-        <Caret Line="389" Column="5" TopLine="327"/>
+        <Caret Line="599" Column="15" TopLine="565"/>
       </Position>
       <Position>
         <Filename Value="particlephysics.pas"/>
-        <Caret Line="69" Column="15" TopLine="26"/>
+        <Caret Line="736" Column="28" TopLine="680"/>
       </Position>
       <Position>
         <Filename Value="particlephysics.pas"/>
-        <Caret Line="416" Column="31" TopLine="409"/>
+        <Caret Line="742" Column="22" TopLine="680"/>
       </Position>
       <Position>
         <Filename Value="particlephysics.pas"/>
-        <Caret Line="60" Column="15" TopLine="27"/>
+        <Caret Line="787" Column="23" TopLine="735"/>
       </Position>
       <Position>
         <Filename Value="particlephysics.pas"/>
-        <Caret Line="329" Column="11" TopLine="302"/>
+        <Caret Line="767" Column="12" TopLine="749"/>
       </Position>
       <Position>
         <Filename Value="particlephysics.pas"/>
-        <Caret Line="45" Column="15"/>
+        <Caret Line="812" TopLine="762"/>
       </Position>
       <Position>
         <Filename Value="particlephysics.pas"/>
-        <Caret Line="184" Column="40" TopLine="161"/>
+        <Caret Line="794" Column="23" TopLine="761"/>
       </Position>
       <Position>
         <Filename Value="particlephysics.pas"/>
-        <Caret Line="330" Column="36" TopLine="304"/>
+        <Caret Line="784" Column="22" TopLine="762"/>
       </Position>
       <Position>
         <Filename Value="particlephysics.pas"/>
-        <Caret Line="64" Column="19" TopLine="52"/>
       </Position>
       <Position>
         <Filename Value="particlephysics.pas"/>
-        <Caret Line="379" Column="78" TopLine="321"/>
+        <Caret Line="98" Column="15" TopLine="39"/>
       </Position>
       <Position>
-        <Filename Value="vectors.pas"/>
-        <Caret Line="12" Column="20"/>
+        <Filename Value="particlephysics.pas"/>
+        <Caret Line="257" Column="20" TopLine="198"/>
+      </Position>
+      <Position>
+        <Filename Value="particlephysics.pas"/>
+        <Caret Line="275" Column="17" TopLine="221"/>
+      </Position>
+      <Position>
+        <Filename Value="particlephysics.pas"/>
+        <Caret Line="776" Column="127" TopLine="751"/>
+      </Position>
+      <Position>
+        <Filename Value="particlephysics.pas"/>
+      </Position>
+      <Position>
+        <Filename Value="particlephysics.pas"/>
+        <Caret Line="59" Column="28"/>
+      </Position>
+      <Position>
+        <Filename Value="particlephysics.pas"/>
+        <Caret Line="855" Column="16" TopLine="797"/>
       </Position>
     </JumpHistory>
     <RunParams>

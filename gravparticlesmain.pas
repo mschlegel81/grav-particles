@@ -14,6 +14,8 @@ TYPE
 
   TGravityMainForm = class(TForm)
     AutoRotateCheckbox: TCheckBox;
+    TIME_LABEL: TLabel;
+    stopCalcButton: TButton;
     resetStarsButton: TButton;
     initDustButton: TButton;
     CheckBox1: TCheckBox;
@@ -49,6 +51,7 @@ TYPE
     PROCEDURE resetStarsButtonClick(Sender: TObject);
     PROCEDURE speedTrackBarChange(Sender: TObject);
     PROCEDURE StarsTrackBarChange(Sender: TObject);
+    PROCEDURE stopCalcButtonClick(Sender: TObject);
   private
     viewState:T_viewState;
     FUNCTION dustCount:longint;
@@ -101,6 +104,7 @@ PROCEDURE TGravityMainForm.IdleFunc(Sender: TObject; VAR done: boolean);
     OpenGLControl1.Invalidate;
     done:=false; // tell lcl to handle messages and return immediatly
     FPS_LABEL.caption:=intToStr(round(viewState.getFps))+' fps';
+    TIME_LABEL.caption:='t='+floatToStrF(viewState.ParticleEngine.totalTime,ffFixed,3,3);
     dustRemainingLabel.caption:='Remaining: '+intToStr(viewState.ParticleEngine.dustCount);
   end;
 
@@ -112,6 +116,11 @@ PROCEDURE TGravityMainForm.initDustButtonClick(Sender: TObject);
     if ComboBox1.ItemIndex=0 then mode:=dim_stableDisk else
     if ComboBox1.ItemIndex=1 then mode:=dim_stableOrbit else
     if ComboBox1.ItemIndex=2 then mode:=dim_randomCloud else
+    if ComboBox1.ItemIndex=4 then mode:=dim_singleRing else
+    if ComboBox1.ItemIndex=5 then mode:=dim_threeRings else
+    if ComboBox1.ItemIndex=6 then mode:=dim_shell else
+    if ComboBox1.ItemIndex=7 then mode:=dim_planetLike else
+    if ComboBox1.ItemIndex=8 then mode:=dim_lonelyCloud else
                                   mode:=dim_stillBackgroundCloud;
     starMask:=0;
     if CheckBox1.checked then starMask+=1;
@@ -120,7 +129,6 @@ PROCEDURE TGravityMainForm.initDustButtonClick(Sender: TObject);
     if CheckBox4.checked then starMask+=8;
     if CheckBox5.checked then starMask+=16;
     viewState.ParticleEngine.initDust(dustCount,starMask,mode);
-    viewState.resetSubSteps;
   end;
 
 PROCEDURE TGravityMainForm.initStarsButtonClick(Sender: TObject);
@@ -147,6 +155,13 @@ PROCEDURE TGravityMainForm.StarsTrackBarChange(Sender: TObject);
     CheckBox4.visible:=StarsTrackBar.position>=4;
     Checkbox3.visible:=StarsTrackBar.position>=3;
     Checkbox2.visible:=StarsTrackBar.position>=2;
+  end;
+
+PROCEDURE TGravityMainForm.stopCalcButtonClick(Sender: TObject);
+  begin
+    viewState.ParticleEngine.cachedSystems.destroying:=true;
+    stopCalcButton.enabled:=false;
+    stopCalcButton.visible:=false;
   end;
 
 FUNCTION TGravityMainForm.dustCount: longint;

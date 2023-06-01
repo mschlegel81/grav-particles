@@ -1,7 +1,7 @@
 object GravityMainForm: TGravityMainForm
-  Left = 226
+  Left = 905
   Height = 734
-  Top = 59
+  Top = 171
   Width = 830
   Caption = 'Gravity'
   ClientHeight = 734
@@ -22,11 +22,12 @@ object GravityMainForm: TGravityMainForm
   end
   object Panel1: TPanel
     Left = 0
-    Height = 368
+    Height = 371
     Top = 0
     Width = 216
+    AutoSize = True
     BevelOuter = bvNone
-    ClientHeight = 368
+    ClientHeight = 371
     ClientWidth = 216
     TabOrder = 1
     object Panel2: TPanel
@@ -249,6 +250,11 @@ object GravityMainForm: TGravityMainForm
           'Stable Clouds around stars'
           'Random Clouds around stars'
           'Background dust'
+          'Ring'
+          '3 Rings'
+          'Shell'
+          'Planet-Like'
+          'Lonely cloud'
         )
         OnSelect = ComboBox1Select
         Style = csDropDownList
@@ -391,18 +397,54 @@ object GravityMainForm: TGravityMainForm
       TabOrder = 3
     end
     object FPS_LABEL: TLabel
+      AnchorSideTop.Control = stopCalcButton
+      AnchorSideTop.Side = asrBottom
       AnchorSideRight.Control = Panel1
       AnchorSideRight.Side = asrBottom
       AnchorSideBottom.Control = Panel1
       AnchorSideBottom.Side = asrBottom
       Left = 156
       Height = 15
-      Top = 350
+      Top = 353
       Width = 57
-      Anchors = [akRight, akBottom]
+      Anchors = [akTop, akRight]
+      BorderSpacing.Top = 3
       BorderSpacing.Right = 3
       BorderSpacing.Bottom = 3
       Caption = 'FPS_LABEL'
+      ParentColor = False
+    end
+    object stopCalcButton: TButton
+      AnchorSideLeft.Control = Panel1
+      AnchorSideTop.Control = AutoRotateCheckbox
+      AnchorSideTop.Side = asrBottom
+      AnchorSideRight.Control = Panel1
+      AnchorSideRight.Side = asrBottom
+      Left = 3
+      Height = 25
+      Top = 325
+      Width = 210
+      Anchors = [akTop, akLeft, akRight]
+      BorderSpacing.Left = 3
+      BorderSpacing.Top = 3
+      BorderSpacing.Right = 3
+      Caption = 'Stop background calculation'
+      OnClick = stopCalcButtonClick
+      TabOrder = 4
+    end
+    object TIME_LABEL: TLabel
+      AnchorSideLeft.Control = Panel1
+      AnchorSideTop.Control = Panel1
+      AnchorSideBottom.Control = Panel1
+      AnchorSideBottom.Side = asrBottom
+      Left = 3
+      Height = 15
+      Top = 353
+      Width = 64
+      Anchors = [akLeft, akBottom]
+      BorderSpacing.Left = 3
+      BorderSpacing.Bottom = 3
+      Caption = 'TIME_LABEL'
       ParentColor = False
     end
   end

@@ -40,7 +40,6 @@ TYPE
         TARGET_FPS            : longint;
         TARGET_TICKS_PER_FRAME: double;
         measuredFps:double;
-        recommendedSubSteps:double;
       end;
       //Mouse handling
       mouse:record
@@ -77,7 +76,6 @@ TYPE
       PROPERTY lockXRotation: boolean read rotation.lockX write rotation.lockX;
 
       FUNCTION getSerialVersion:dword; virtual;
-      PROCEDURE resetSubSteps;
 
       DESTRUCTOR destroy;
   end;
@@ -91,9 +89,6 @@ CONSTRUCTOR T_viewState.create(control: TOpenGLControl);
     ParticleEngine:=TParticleEngine.create;
     ParticleEngine.initStars(2);
     ParticleEngine.initDust(20000,255,dim_stableDisk);
-    with frameRateControl do begin
-      recommendedSubSteps:=1;
-    end;
 
     rotation.distance:=5;
 
@@ -135,11 +130,6 @@ CONSTRUCTOR T_viewState.create(control: TOpenGLControl);
 FUNCTION T_viewState.getSerialVersion: dword;
   begin
     result:=5;
-  end;
-
-PROCEDURE T_viewState.resetSubSteps;
-  begin
-    frameRateControl.recommendedSubSteps:=1;
   end;
 
 DESTRUCTOR T_viewState.destroy;
@@ -302,8 +292,6 @@ PROCEDURE T_viewState.viewPaint(Sender: TObject);
       ay:double=az;
       tickDelta: qword;
       currTicks: qword;
-      calcTicks: qword;
-      subSteps:longint;
   begin
     with frameRateControl do begin
       currTicks:=GetTickCount64;
@@ -321,21 +309,7 @@ PROCEDURE T_viewState.viewPaint(Sender: TObject);
 
     if OpenGLControl.MakeCurrent then begin
       if not AreaInitialized then initializeArea;
-
-      subSteps:=round(frameRateControl.recommendedSubSteps);
-
-      if subSteps<1 then subSteps:=1;
-      calcTicks:=GetTickCount64;
-      ParticleEngine.update(tickDelta,subSteps);
-      calcTicks:=GetTickCount64-calcTicks;
-      if calcTicks=0 then calcTicks:=1;
-
-      if ParticleEngine.dtFactor>0 then with frameRateControl do begin
-        recommendedSubSteps*=0.9+0.1*((TARGET_TICKS_PER_FRAME{-1000/measuredFps+calcTicks}) / calcTicks);
-        {$ifdef debugMode}
-        //writeln('subSteps: ',subSteps,' calcTicks: ',calcTicks);
-        {$endif}
-      end;
+      ParticleEngine.update(tickDelta,frameRateControl.measuredFps<frameRateControl.TARGET_FPS);
 
       //Update rotation angles
       if (mouse.isDown<>leftDown) then with rotation do begin

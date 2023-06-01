@@ -9,6 +9,9 @@ USES
   {$IFDEF HASAMIGA}
   athreads,
   {$endif}
+  {$ifdef Windows}
+  sysutils,
+  {$endif}
   Interfaces, // this includes the LCL widgetset
   Forms, gravParticlesMain, viewWrapper, lazopenglcontext
   { you can add units after this };
@@ -17,6 +20,10 @@ USES
 
 begin
   RequireDerivedFormResource:=true;
+  Application.title:='Gravitating Dust';
+  {$ifdef Windows}
+  ExecuteProcess('cmd','/C title Gravitating Dust (status)');
+  {$endif}
   Application.Scaled:=true;
   Application.initialize;
   Application.CreateForm(TGravityMainForm, GravityMainForm);

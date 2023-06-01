@@ -5,13 +5,16 @@
     <PathDelim Value="\"/>
     <General>
       <SessionStorage Value="InProjectDir"/>
-      <Title Value="gravityMain"/>
+      <Title Value="Gravitating Dust"/>
       <Scaled Value="True"/>
       <ResourceType Value="res"/>
       <UseXPManifest Value="True"/>
       <XPManifest>
-        <DpiAware Value="True"/>
+        <DpiAware Value="True/PM_V2"/>
+        <TextName Value="Gravitating Dust"/>
+        <TextDesc Value="A simple gravity simulation using OpenGL"/>
       </XPManifest>
+      <Icon Value="0"/>
     </General>
     <BuildModes>
       <Item Name="Default" Default="True"/>
@@ -20,7 +23,7 @@
           <Version Value="11"/>
           <PathDelim Value="\"/>
           <Target>
-            <Filename Value="gravityMain"/>
+            <Filename Value="gravity_debug"/>
           </Target>
           <SearchPaths>
             <IncludeFiles Value="$(ProjOutDir)"/>
@@ -91,7 +94,7 @@
     <Version Value="11"/>
     <PathDelim Value="\"/>
     <Target>
-      <Filename Value="gravityMain"/>
+      <Filename Value="gravity"/>
     </Target>
     <SearchPaths>
       <IncludeFiles Value="$(ProjOutDir)"/>
