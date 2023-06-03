@@ -309,8 +309,6 @@ PROCEDURE T_viewState.viewPaint(Sender: TObject);
       //Dust recommendation
       if ParticleEngine.dtFactor=0
       then sleep(5)
-      else if tickDelta*2<frameRateControl.TARGET_TICKS_PER_FRAME
-      then sleep(1)
       else if (tickDelta>1) and (ParticleEngine.dustCount>0)
       then dustRecommendation:=dustRecommendation*0.9+0.1*(ParticleEngine.dustCount/tickDelta*TARGET_TICKS_PER_FRAME);
 
