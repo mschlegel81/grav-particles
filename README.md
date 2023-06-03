@@ -5,6 +5,8 @@ Let dust orbit around systems of up to 5 mass points - "stars" if you will.
 
 Stars interact with each other in the usual manner, while dust is treated as massless (therefore non-attracting) test particles.
 
+Dust which is neither gravitationally bound nor moves in the general direction of a star is removed.
+
 ## Controls
 ### Speed
 ...selects the simulation speed, i.e. the factor between real time and simulated time.
