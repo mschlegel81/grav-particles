@@ -14,6 +14,11 @@ TYPE
 
   TGravityMainForm = class(TForm)
     AutoRotateCheckbox: TCheckBox;
+    Label3: TLabel;
+    Panel5: TPanel;
+    PointSizeTrackBar: TTrackBar;
+    startBgCalc: TButton;
+    SetRecommendedDustButton: TButton;
     TIME_LABEL: TLabel;
     stopCalcButton: TButton;
     resetStarsButton: TButton;
@@ -48,9 +53,12 @@ TYPE
     PROCEDURE IdleFunc(Sender: TObject; VAR done: boolean);
     PROCEDURE initDustButtonClick(Sender: TObject);
     PROCEDURE initStarsButtonClick(Sender: TObject);
+    PROCEDURE PointSizeTrackBarChange(Sender: TObject);
     PROCEDURE resetStarsButtonClick(Sender: TObject);
+    PROCEDURE SetRecommendedDustButtonClick(Sender: TObject);
     PROCEDURE speedTrackBarChange(Sender: TObject);
     PROCEDURE StarsTrackBarChange(Sender: TObject);
+    PROCEDURE startBgCalcClick(Sender: TObject);
     PROCEDURE stopCalcButtonClick(Sender: TObject);
   private
     viewState:T_viewState;
@@ -136,6 +144,11 @@ PROCEDURE TGravityMainForm.initStarsButtonClick(Sender: TObject);
     viewState.ParticleEngine.initStars(StarsTrackBar.position);
   end;
 
+PROCEDURE TGravityMainForm.PointSizeTrackBarChange(Sender: TObject);
+  begin
+    viewState.pointSize:=PointSizeTrackBar.position*0.1;
+  end;
+
 PROCEDURE TGravityMainForm.resetStarsButtonClick(Sender: TObject);
   begin
     viewState.ParticleEngine.resetStars;
@@ -157,16 +170,31 @@ PROCEDURE TGravityMainForm.StarsTrackBarChange(Sender: TObject);
     Checkbox2.visible:=StarsTrackBar.position>=2;
   end;
 
+PROCEDURE TGravityMainForm.startBgCalcClick(Sender: TObject);
+  begin
+    viewState.ParticleEngine.cachedSystems.startBackgroundCalculation;
+  end;
+
 PROCEDURE TGravityMainForm.stopCalcButtonClick(Sender: TObject);
   begin
     viewState.ParticleEngine.cachedSystems.destroying:=true;
-    stopCalcButton.enabled:=false;
-    stopCalcButton.visible:=false;
   end;
+
+CONST DUST_COUNT_TAB:array[0..80] of longint=(0,100,126,141,158,178,200,224,251,282,316,355,398,447,501,562,631,708,794,891,1000,1122,1259,1413,1585,1778,1995,2239,2512,2818,3162,3548,3981,4467,5012,5623,6310,7079,7943,8913,10000,11220,12589,14125,15849,17783,19953,22387,25119,28184,31623,35481,39811,44668,50119,56234,63096,70795,79433,89125,100000,112202,125893,141254,158489,177828,199526,223872,251189,281838,316228,354813,398107,446684,501187,562341,630957,707946,794328,891251,1000000);
 
 FUNCTION TGravityMainForm.dustCount: longint;
   begin
-    result:=round(exp(ln(1E6)*DustTrackBar.position/DustTrackBar.max));
+    result:=DUST_COUNT_TAB[DustTrackBar.position];
+  end;
+
+PROCEDURE TGravityMainForm.SetRecommendedDustButtonClick(Sender: TObject);
+  VAR recommended:double;
+      i:longint;
+  begin
+    recommended:=viewState.dustRecommendation;
+    i:=80;
+    while (i>0) and (DUST_COUNT_TAB[i]>recommended) do dec(i);
+    DustTrackBar.position:=i;
   end;
 
 end.

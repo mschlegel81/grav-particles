@@ -6,6 +6,7 @@ INTERFACE
 USES GL;
 TYPE
   TVector3=array[0..2] of double;
+  PVector3=^TVector3;
   TIntVec3=array[0..2] of longint;
   TMatrix3x3=array[0..2] of TVector3;
 

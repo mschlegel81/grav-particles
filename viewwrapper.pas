@@ -26,6 +26,7 @@ TYPE
       end;
       geometry:record
         ParticleList: GLuint;
+        pointSize:double;
       end;
       rotation:record
         rx,ry: single;
@@ -40,6 +41,7 @@ TYPE
         TARGET_FPS            : longint;
         TARGET_TICKS_PER_FRAME: double;
         measuredFps:double;
+        dustRecommendation:double;
       end;
       //Mouse handling
       mouse:record
@@ -72,9 +74,10 @@ TYPE
       PROPERTY light1Brightness:TGLfloat read getLight1Brightness write setLight1Brightness;
       PROPERTY light2Brightness:TGLfloat read getLight2Brightness write setLight2Brightness;
       PROPERTY light3Brightness:TGLfloat read getLight3Brightness write setLight3Brightness;
+      PROPERTY pointSize:double read geometry.pointSize write geometry.pointSize;
 
       PROPERTY lockXRotation: boolean read rotation.lockX write rotation.lockX;
-
+      PROPERTY dustRecommendation: double read frameRateControl.dustRecommendation;
       FUNCTION getSerialVersion:dword; virtual;
 
       DESTRUCTOR destroy;
@@ -88,9 +91,11 @@ CONSTRUCTOR T_viewState.create(control: TOpenGLControl);
     OpenGLControl.DoubleBuffered:=true;
     ParticleEngine:=TParticleEngine.create;
     ParticleEngine.initStars(2);
-    ParticleEngine.initDust(20000,255,dim_stableDisk);
+    ParticleEngine.initDust(0,255,dim_stableDisk);
+    ParticleEngine.dtFactor:=0;
 
-    rotation.distance:=5;
+    geometry.pointSize:=1;
+    rotation.distance:=20;
 
     with mouse do begin
       mouseX:=0;
@@ -239,6 +244,7 @@ PROCEDURE T_viewState.viewPaint(Sender: TObject);
         i:longint;
     begin
       frameRateControl.LastFrameTicks:=0;
+      frameRateControl.dustRecommendation:=100000;
       {diffuse position}
       n:=vectorOf(1,2,0); n*=1/euklideanNorm(n);
       with lighting do begin
@@ -300,6 +306,14 @@ PROCEDURE T_viewState.viewPaint(Sender: TObject);
       //Frame rate counting:
       inc(frameCount);
       LastFrameTicks+=tickDelta;
+      //Dust recommendation
+      if ParticleEngine.dtFactor=0
+      then sleep(5)
+      else if tickDelta*2<frameRateControl.TARGET_TICKS_PER_FRAME
+      then sleep(1)
+      else if (tickDelta>1) and (ParticleEngine.dustCount>0)
+      then dustRecommendation:=dustRecommendation*0.9+0.1*(ParticleEngine.dustCount/tickDelta*TARGET_TICKS_PER_FRAME);
+
       if (LastFrameTicks>=1000) then begin
         measuredFps:=1E3*frameCount/LastFrameTicks;
         LastFrameTicks-=1000;
@@ -338,10 +352,8 @@ PROCEDURE T_viewState.viewPaint(Sender: TObject);
       glRotatef(rotation.ry,0.0,1.0,0.0);
       //Draw
       glLightfv(GL_LIGHT0,GL_POSITION,lighting.position);
-      glEnable(GL_BLEND);
       glColorMaterial(GL_FRONT,GL_AMBIENT_AND_DIFFUSE);
-      ParticleEngine.DrawParticles(geometry.ParticleList);
-      glDisable(GL_BLEND);
+      ParticleEngine.DrawParticles(geometry.ParticleList,geometry.pointSize);
       glPopMatrix;
 
       OpenGLControl.SwapBuffers;

@@ -22,13 +22,13 @@ object GravityMainForm: TGravityMainForm
   end
   object Panel1: TPanel
     Left = 0
-    Height = 371
+    Height = 421
     Top = 0
-    Width = 216
+    Width = 236
     AutoSize = True
     BevelOuter = bvNone
-    ClientHeight = 371
-    ClientWidth = 216
+    ClientHeight = 421
+    ClientWidth = 236
     TabOrder = 1
     object Panel2: TPanel
       AnchorSideLeft.Control = Panel1
@@ -38,7 +38,7 @@ object GravityMainForm: TGravityMainForm
       Left = 3
       Height = 47
       Top = 3
-      Width = 210
+      Width = 230
       Anchors = [akTop, akLeft, akRight]
       AutoSize = True
       BorderSpacing.Left = 3
@@ -48,7 +48,7 @@ object GravityMainForm: TGravityMainForm
       BevelOuter = bvLowered
       BorderWidth = 1
       ClientHeight = 47
-      ClientWidth = 210
+      ClientWidth = 230
       TabOrder = 0
       object Label1: TLabel
         AnchorSideLeft.Control = Panel2
@@ -69,7 +69,7 @@ object GravityMainForm: TGravityMainForm
         Left = 5
         Height = 25
         Top = 17
-        Width = 200
+        Width = 220
         Frequency = 10
         Max = 100
         OnChange = SpeedTrackBarChange
@@ -92,7 +92,7 @@ object GravityMainForm: TGravityMainForm
       Left = 3
       Height = 103
       Top = 53
-      Width = 210
+      Width = 230
       Anchors = [akTop, akLeft, akRight]
       AutoSize = True
       BorderSpacing.Left = 3
@@ -102,7 +102,7 @@ object GravityMainForm: TGravityMainForm
       BevelOuter = bvLowered
       BorderWidth = 1
       ClientHeight = 103
-      ClientWidth = 210
+      ClientWidth = 230
       TabOrder = 1
       object starsLabel: TLabel
         AnchorSideLeft.Control = Panel3
@@ -111,7 +111,7 @@ object GravityMainForm: TGravityMainForm
         Height = 15
         Top = 2
         Width = 37
-        Caption = 'Stars: 1'
+        Caption = 'Stars: 2'
         ParentColor = False
       end
       object StarsTrackBar: TTrackBar
@@ -123,12 +123,12 @@ object GravityMainForm: TGravityMainForm
         Left = 5
         Height = 25
         Top = 17
-        Width = 200
+        Width = 220
         Max = 5
         Min = 1
         OnChange = StarsTrackBarChange
         PageSize = 1
-        Position = 1
+        Position = 2
         ShowSelRange = False
         Anchors = [akTop, akLeft, akRight]
         BorderSpacing.Left = 3
@@ -145,7 +145,7 @@ object GravityMainForm: TGravityMainForm
         Left = 5
         Height = 25
         Top = 45
-        Width = 200
+        Width = 220
         Anchors = [akTop, akLeft, akRight]
         BorderSpacing.Left = 3
         BorderSpacing.Top = 3
@@ -164,7 +164,7 @@ object GravityMainForm: TGravityMainForm
         Left = 5
         Height = 25
         Top = 73
-        Width = 200
+        Width = 220
         Anchors = [akTop, akLeft, akRight]
         BorderSpacing.Left = 3
         BorderSpacing.Top = 3
@@ -184,7 +184,7 @@ object GravityMainForm: TGravityMainForm
       Left = 3
       Height = 141
       Top = 159
-      Width = 210
+      Width = 230
       Anchors = [akTop, akLeft, akRight]
       AutoSize = True
       BorderSpacing.Left = 3
@@ -194,7 +194,7 @@ object GravityMainForm: TGravityMainForm
       BevelOuter = bvLowered
       BorderWidth = 1
       ClientHeight = 141
-      ClientWidth = 210
+      ClientWidth = 230
       TabOrder = 2
       object dustLabel: TLabel
         AnchorSideLeft.Control = Panel4
@@ -203,28 +203,26 @@ object GravityMainForm: TGravityMainForm
         Height = 15
         Top = 2
         Width = 36
-        Caption = 'Dust: 1'
+        Caption = 'Dust: 0'
         ParentColor = False
       end
       object DustTrackBar: TTrackBar
         AnchorSideLeft.Control = Panel4
         AnchorSideTop.Control = dustLabel
         AnchorSideTop.Side = asrBottom
-        AnchorSideRight.Control = Panel4
-        AnchorSideRight.Side = asrBottom
+        AnchorSideRight.Control = SetRecommendedDustButton
         Left = 5
         Height = 25
         Top = 17
-        Width = 200
-        Frequency = 10
-        Max = 100
+        Width = 170
+        Frequency = 20
+        Max = 80
         OnChange = DustTrackBarChange
-        PageSize = 1
+        PageSize = 10
         Position = 0
         ShowSelRange = False
         Anchors = [akTop, akLeft, akRight]
         BorderSpacing.Left = 3
-        BorderSpacing.Right = 3
         BorderSpacing.Bottom = 3
         TabOrder = 0
       end
@@ -237,7 +235,7 @@ object GravityMainForm: TGravityMainForm
         Left = 5
         Height = 23
         Top = 63
-        Width = 200
+        Width = 220
         Anchors = [akTop, akLeft, akRight]
         BorderSpacing.Left = 3
         BorderSpacing.Top = 3
@@ -258,7 +256,7 @@ object GravityMainForm: TGravityMainForm
         )
         OnSelect = ComboBox1Select
         Style = csDropDownList
-        TabOrder = 1
+        TabOrder = 2
         Text = 'Stable Disks around stars'
       end
       object Label2: TLabel
@@ -285,7 +283,7 @@ object GravityMainForm: TGravityMainForm
         Width = 20
         BorderSpacing.Left = 3
         BorderSpacing.Top = 3
-        TabOrder = 2
+        TabOrder = 3
       end
       object CheckBox2: TCheckBox
         AnchorSideLeft.Control = CheckBox1
@@ -298,7 +296,7 @@ object GravityMainForm: TGravityMainForm
         Width = 20
         BorderSpacing.Left = 3
         BorderSpacing.Top = 3
-        TabOrder = 3
+        TabOrder = 4
       end
       object CheckBox3: TCheckBox
         AnchorSideLeft.Control = CheckBox2
@@ -311,7 +309,7 @@ object GravityMainForm: TGravityMainForm
         Width = 20
         BorderSpacing.Left = 3
         BorderSpacing.Top = 3
-        TabOrder = 4
+        TabOrder = 5
       end
       object CheckBox4: TCheckBox
         AnchorSideLeft.Control = CheckBox3
@@ -324,7 +322,7 @@ object GravityMainForm: TGravityMainForm
         Width = 20
         BorderSpacing.Left = 3
         BorderSpacing.Top = 3
-        TabOrder = 5
+        TabOrder = 6
       end
       object CheckBox5: TCheckBox
         AnchorSideLeft.Control = CheckBox4
@@ -337,7 +335,7 @@ object GravityMainForm: TGravityMainForm
         Width = 20
         BorderSpacing.Left = 3
         BorderSpacing.Top = 3
-        TabOrder = 6
+        TabOrder = 7
       end
       object initDustButton: TButton
         AnchorSideLeft.Control = Panel4
@@ -348,7 +346,7 @@ object GravityMainForm: TGravityMainForm
         Left = 5
         Height = 25
         Top = 111
-        Width = 200
+        Width = 220
         Anchors = [akTop, akLeft, akRight]
         BorderSpacing.Left = 3
         BorderSpacing.Top = 3
@@ -356,7 +354,7 @@ object GravityMainForm: TGravityMainForm
         BorderSpacing.Bottom = 3
         Caption = 'set'
         OnClick = initDustButtonClick
-        TabOrder = 7
+        TabOrder = 8
       end
       object dustRemainingLabel: TLabel
         AnchorSideTop.Control = DustTrackBar
@@ -367,6 +365,25 @@ object GravityMainForm: TGravityMainForm
         Width = 108
         Caption = 'dustRemainingLabel'
         ParentColor = False
+      end
+      object SetRecommendedDustButton: TButton
+        AnchorSideLeft.Control = DustTrackBar
+        AnchorSideLeft.Side = asrBottom
+        AnchorSideTop.Control = DustTrackBar
+        AnchorSideRight.Control = Panel4
+        AnchorSideRight.Side = asrBottom
+        AnchorSideBottom.Control = DustTrackBar
+        AnchorSideBottom.Side = asrBottom
+        Left = 175
+        Height = 25
+        Top = 17
+        Width = 50
+        Anchors = [akTop, akRight]
+        AutoSize = True
+        BorderSpacing.Right = 3
+        Caption = 'auto'
+        OnClick = SetRecommendedDustButtonClick
+        TabOrder = 1
       end
     end
     object AutoRotateLabel: TLabel
@@ -403,9 +420,9 @@ object GravityMainForm: TGravityMainForm
       AnchorSideRight.Side = asrBottom
       AnchorSideBottom.Control = Panel1
       AnchorSideBottom.Side = asrBottom
-      Left = 156
+      Left = 176
       Height = 15
-      Top = 353
+      Top = 403
       Width = 57
       Anchors = [akTop, akRight]
       BorderSpacing.Top = 3
@@ -416,14 +433,13 @@ object GravityMainForm: TGravityMainForm
     end
     object stopCalcButton: TButton
       AnchorSideLeft.Control = Panel1
-      AnchorSideTop.Control = AutoRotateCheckbox
+      AnchorSideTop.Control = Panel5
       AnchorSideTop.Side = asrBottom
-      AnchorSideRight.Control = Panel1
-      AnchorSideRight.Side = asrBottom
+      AnchorSideRight.Control = startBgCalc
       Left = 3
       Height = 25
-      Top = 325
-      Width = 210
+      Top = 375
+      Width = 178
       Anchors = [akTop, akLeft, akRight]
       BorderSpacing.Left = 3
       BorderSpacing.Top = 3
@@ -434,18 +450,89 @@ object GravityMainForm: TGravityMainForm
     end
     object TIME_LABEL: TLabel
       AnchorSideLeft.Control = Panel1
-      AnchorSideTop.Control = Panel1
+      AnchorSideTop.Control = stopCalcButton
+      AnchorSideTop.Side = asrBottom
       AnchorSideBottom.Control = Panel1
       AnchorSideBottom.Side = asrBottom
       Left = 3
       Height = 15
-      Top = 353
+      Top = 403
       Width = 64
-      Anchors = [akLeft, akBottom]
       BorderSpacing.Left = 3
+      BorderSpacing.Top = 3
       BorderSpacing.Bottom = 3
       Caption = 'TIME_LABEL'
       ParentColor = False
+    end
+    object startBgCalc: TButton
+      AnchorSideTop.Control = stopCalcButton
+      AnchorSideRight.Control = Panel1
+      AnchorSideRight.Side = asrBottom
+      Left = 184
+      Height = 25
+      Top = 375
+      Width = 49
+      Anchors = [akTop, akRight]
+      AutoSize = True
+      BorderSpacing.Right = 3
+      Caption = 'start'
+      OnClick = startBgCalcClick
+      TabOrder = 5
+    end
+    object Panel5: TPanel
+      AnchorSideLeft.Control = Panel1
+      AnchorSideTop.Control = AutoRotateCheckbox
+      AnchorSideTop.Side = asrBottom
+      AnchorSideRight.Control = Panel1
+      AnchorSideRight.Side = asrBottom
+      Left = 3
+      Height = 47
+      Top = 325
+      Width = 230
+      Anchors = [akTop, akLeft, akRight]
+      AutoSize = True
+      BorderSpacing.Left = 3
+      BorderSpacing.Top = 3
+      BorderSpacing.Right = 3
+      BevelColor = 8750469
+      BevelOuter = bvLowered
+      BorderWidth = 1
+      ClientHeight = 47
+      ClientWidth = 230
+      TabOrder = 6
+      object Label3: TLabel
+        AnchorSideLeft.Control = Panel5
+        AnchorSideTop.Control = Panel5
+        Left = 2
+        Height = 15
+        Top = 2
+        Width = 88
+        Caption = 'Dust particle size'
+        ParentColor = False
+      end
+      object PointSizeTrackBar: TTrackBar
+        AnchorSideLeft.Control = Panel5
+        AnchorSideTop.Control = Label3
+        AnchorSideTop.Side = asrBottom
+        AnchorSideRight.Control = Panel5
+        AnchorSideRight.Side = asrBottom
+        Left = 5
+        Height = 25
+        Top = 17
+        Width = 220
+        Frequency = 10
+        Max = 50
+        Min = 10
+        OnChange = PointSizeTrackBarChange
+        PageSize = 10
+        Position = 10
+        ShowSelRange = False
+        Anchors = [akTop, akLeft, akRight]
+        BorderSpacing.Left = 3
+        BorderSpacing.Right = 3
+        BorderSpacing.Bottom = 3
+        TabOrder = 0
+      end
     end
   end
 end
