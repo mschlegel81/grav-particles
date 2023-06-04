@@ -14,6 +14,8 @@ TYPE
 
   TGravityMainForm = class(TForm)
     AutoRotateCheckbox: TCheckBox;
+    shrinkButton: TButton;
+    growButton: TButton;
     Label3: TLabel;
     Panel5: TPanel;
     PointSizeTrackBar: TTrackBar;
@@ -50,12 +52,15 @@ TYPE
     PROCEDURE DustTrackBarChange(Sender: TObject);
     PROCEDURE FormCreate(Sender: TObject);
     PROCEDURE FormDestroy(Sender: TObject);
+    PROCEDURE growButtonClick(Sender: TObject);
     PROCEDURE IdleFunc(Sender: TObject; VAR done: boolean);
     PROCEDURE initDustButtonClick(Sender: TObject);
     PROCEDURE initStarsButtonClick(Sender: TObject);
+    PROCEDURE Panel3Resize(Sender: TObject);
     PROCEDURE PointSizeTrackBarChange(Sender: TObject);
     PROCEDURE resetStarsButtonClick(Sender: TObject);
     PROCEDURE SetRecommendedDustButtonClick(Sender: TObject);
+    PROCEDURE shrinkButtonClick(Sender: TObject);
     PROCEDURE speedTrackBarChange(Sender: TObject);
     PROCEDURE StarsTrackBarChange(Sender: TObject);
     PROCEDURE startBgCalcClick(Sender: TObject);
@@ -86,6 +91,16 @@ PROCEDURE TGravityMainForm.FormCreate(Sender: TObject);
 PROCEDURE TGravityMainForm.FormDestroy(Sender: TObject);
   begin
     viewState.destroy;
+  end;
+
+PROCEDURE TGravityMainForm.growButtonClick(Sender: TObject);
+  begin
+    viewState.ParticleEngine.multiplySize(sqrt(2));
+  end;
+
+PROCEDURE TGravityMainForm.shrinkButtonClick(Sender: TObject);
+  begin
+    viewState.ParticleEngine.multiplySize(sqrt(0.5));
   end;
 
 PROCEDURE TGravityMainForm.DustTrackBarChange(Sender: TObject);
@@ -142,6 +157,16 @@ PROCEDURE TGravityMainForm.initDustButtonClick(Sender: TObject);
 PROCEDURE TGravityMainForm.initStarsButtonClick(Sender: TObject);
   begin
     viewState.ParticleEngine.initStars(StarsTrackBar.position);
+  end;
+
+PROCEDURE TGravityMainForm.Panel3Resize(Sender: TObject);
+  VAR w:longint;
+  begin
+    w:=(Panel3.width-15) div 2;
+    resetStarsButton.width:=w;
+    initStarsButton.width:=w;
+    growButton.width:=w;
+    shrinkButton.width:=w;
   end;
 
 PROCEDURE TGravityMainForm.PointSizeTrackBarChange(Sender: TObject);

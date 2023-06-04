@@ -88,6 +88,7 @@ TYPE
     PROCEDURE initStars(CONST sys:TStarSys);
     PROCEDURE resetStars;
     FUNCTION dustCount:longint;
+    PROCEDURE multiplySize(CONST factor:double);
 
   end;
 
@@ -227,6 +228,19 @@ PROCEDURE randomStarStats(OUT radius,mass:double; OUT color:TVector3);
                     max(0,min(1,x-2)));
   end;
 
+PROCEDURE multiplyStarMass(VAR star:TStar; CONST factor:double);
+  VAR density,commonFactor,x:double;
+  begin
+    density:=star.mass/power(star.radius,3);
+    commonFactor:=(density-10)/790;
+    star.mass*=factor;
+    star.radius:=power(star.mass/density,1/3);
+    x:=0.2+2.7*commonFactor;
+    star.color:=vectorOf(max(0,min(1,x)),
+                         max(0,min(1,x-1)),
+                         max(0,min(1,x-2)));
+  end;
+
 PROCEDURE TCachedSystems.prepareSystem(CONST starCount: longint);
   VAR i:longint;
       totalMass:double;
@@ -288,6 +302,10 @@ PROCEDURE TCachedSystems.prepareSystem(CONST starCount: longint);
       closeToOther:boolean;
       boundToOther:boolean;
       j:longint;
+      maxMass:double=0;
+      maxRadius:double=0;
+      minDistance:double=infinity;
+      beta:double;
   begin
     newSytem.create;
     totalMass:=0;
@@ -296,8 +314,9 @@ PROCEDURE TCachedSystems.prepareSystem(CONST starCount: longint);
     setLength(newSytem.stars,starCount);
     for i:=0 to length(newSytem.stars)-1 do with newSytem.stars[i] do begin
       randomStarStats(radius,mass,color);
+      if mass>maxMass then maxMass:=mass;
       repeat
-        p:=randomInSphere*10;
+        p:=randomInSphere*(10*random);
         closeToOther:=false;
         for j:=0 to i-1 do closeToOther:=closeToOther or (euklideanNorm(p-newSytem.stars[j].p)<2*(radius+newSytem.stars[j].radius));
       until not(closeToOther);
@@ -311,14 +330,24 @@ PROCEDURE TCachedSystems.prepareSystem(CONST starCount: longint);
       posCenter+=p*mass;
       velCenter+=v*mass;
     end;
-
     newSytem.qualityMeasure:=0;
-
     posCenter*=(1/totalMass);
     velCenter*=(1/totalMass);
     for i:=0 to length(newSytem.stars)-1 do with newSytem.stars[i] do begin
       p-=posCenter;
       v-=velCenter;
+    end;
+
+    maxMass:=10/maxMass;
+    for i:=0 to length(newSytem.stars)-1 do begin
+      multiplyStarMass(newSytem.stars[i],maxMass);
+      maxRadius:=max(maxRadius,newSytem.stars[i].radius);
+      for j:=0 to i-1 do minDistance:=min(minDistance,euklideanNorm(newSytem.stars[i].p-newSytem.stars[j].p));
+    end;
+    beta:=(4+10*random)*maxRadius/minDistance;
+    if beta<1 then for i:=0 to length(newSytem.stars)-1 do begin
+      newSytem.stars[i].p*=beta;
+      newSytem.stars[i].v*=1/sqrt(beta);
     end;
 
     evaluateSystem(newSytem);
@@ -470,7 +499,7 @@ PROCEDURE TParticleEngine.MoveParticles(CONST dt: double; CONST stressed:boolean
              setLength(trajectory,j+1);
              trajectory[j]:=p;
            end;
-           if ((j>10) and (sqrEuklideanNorm(trajectory[0]-p)<sqr(radius-0.01))) or (j>1000) then begin
+           if ((j>10) and (sqrEuklideanNorm(trajectory[0]-p)<sqr(radius))) or (j>2000) then begin
              for j:=0 to length(trajectory)-2 do trajectory[j]:=trajectory[j+1];
              setLength(trajectory,length(trajectory)-1);
            end;
@@ -498,7 +527,6 @@ PROCEDURE TParticleEngine.MoveParticles(CONST dt: double; CONST stressed:boolean
           if i<>j then star[j]:=star[i]; inc(j);
         end;
         setLength(star,j);
-
       end;
     end;
 
@@ -536,7 +564,6 @@ PROCEDURE TParticleEngine.MoveParticles(CONST dt: double; CONST stressed:boolean
         end;
         if flaggedForRemoval then inc(removalCounter);
       end;
-      if removalCounter>0 then inc(removalCounter); //Ensure that even amounts <10% are removed eventually
       if removalCounter*10>length(dust) then begin //Removing is expensive. Do this only when more than 10% can be removed...
         removalCounter:=0;
         j:=0;
@@ -904,7 +931,26 @@ PROCEDURE TParticleEngine.resetStars;
 
 FUNCTION TParticleEngine.dustCount: longint;
   begin
-    result:=length(dust);
+    result:=length(dust)-removalCounter;
+  end;
+
+PROCEDURE TParticleEngine.multiplySize(CONST factor:double);
+  VAR i,j:longint;
+      vFactor,aFactor:double;
+  begin
+    vFactor:=1/sqrt(factor);
+    aFactor:=1/sqr(factor);
+    for i:=0 to length(star)-1 do with star[i] do begin
+      p*=factor;
+      v*=vFactor;
+      a*=aFactor;
+      for j:=0 to length(trajectory)-1 do trajectory[j]*=factor;
+    end;
+    for i:=0 to length(dust)-1 do with dust[i] do begin
+      p*=factor;
+      v*=vFactor;
+      a*=aFactor;
+    end;
   end;
 
 end.

@@ -1,7 +1,7 @@
 object GravityMainForm: TGravityMainForm
-  Left = 905
+  Left = 644
   Height = 734
-  Top = 171
+  Top = 164
   Width = 830
   Caption = 'Gravity'
   ClientHeight = 734
@@ -23,12 +23,12 @@ object GravityMainForm: TGravityMainForm
   end
   object Panel1: TPanel
     Left = 0
-    Height = 530
+    Height = 529
     Top = 0
     Width = 283
     AutoSize = True
     BevelOuter = bvNone
-    ClientHeight = 530
+    ClientHeight = 529
     ClientWidth = 283
     TabOrder = 1
     object Panel2: TPanel
@@ -91,7 +91,7 @@ object GravityMainForm: TGravityMainForm
       AnchorSideRight.Control = Panel1
       AnchorSideRight.Side = asrBottom
       Left = 4
-      Height = 129
+      Height = 128
       Top = 67
       Width = 275
       Anchors = [akTop, akLeft, akRight]
@@ -102,9 +102,10 @@ object GravityMainForm: TGravityMainForm
       BevelColor = 8750469
       BevelOuter = bvLowered
       BorderWidth = 1
-      ClientHeight = 129
+      ClientHeight = 128
       ClientWidth = 275
       TabOrder = 1
+      OnResize = Panel3Resize
       object starsLabel: TLabel
         AnchorSideLeft.Control = Panel3
         AnchorSideTop.Control = Panel3
@@ -141,13 +142,11 @@ object GravityMainForm: TGravityMainForm
         AnchorSideLeft.Control = Panel3
         AnchorSideTop.Control = StarsTrackBar
         AnchorSideTop.Side = asrBottom
-        AnchorSideRight.Control = Panel3
         AnchorSideRight.Side = asrBottom
         Left = 6
         Height = 31
         Top = 57
-        Width = 263
-        Anchors = [akTop, akLeft, akRight]
+        Width = 130
         BorderSpacing.Left = 4
         BorderSpacing.Top = 4
         BorderSpacing.Right = 4
@@ -158,15 +157,15 @@ object GravityMainForm: TGravityMainForm
       end
       object resetStarsButton: TButton
         AnchorSideLeft.Control = Panel3
-        AnchorSideTop.Control = initStarsButton
+        AnchorSideTop.Control = StarsTrackBar
         AnchorSideTop.Side = asrBottom
         AnchorSideRight.Control = Panel3
         AnchorSideRight.Side = asrBottom
-        Left = 6
+        Left = 139
         Height = 31
-        Top = 92
-        Width = 263
-        Anchors = [akTop, akLeft, akRight]
+        Top = 57
+        Width = 130
+        Anchors = [akTop, akRight]
         BorderSpacing.Left = 4
         BorderSpacing.Top = 4
         BorderSpacing.Right = 4
@@ -174,6 +173,39 @@ object GravityMainForm: TGravityMainForm
         Caption = 'reset'
         OnClick = resetStarsButtonClick
         TabOrder = 2
+      end
+      object growButton: TButton
+        AnchorSideLeft.Control = Panel3
+        AnchorSideTop.Control = initStarsButton
+        AnchorSideTop.Side = asrBottom
+        Left = 5
+        Height = 31
+        Top = 92
+        Width = 94
+        BorderSpacing.Left = 3
+        BorderSpacing.Top = 3
+        BorderSpacing.Right = 3
+        BorderSpacing.Bottom = 3
+        Caption = 'grow'
+        OnClick = growButtonClick
+        TabOrder = 3
+      end
+      object shrinkButton: TButton
+        AnchorSideTop.Control = resetStarsButton
+        AnchorSideTop.Side = asrBottom
+        AnchorSideRight.Control = Panel3
+        AnchorSideRight.Side = asrBottom
+        Left = 176
+        Height = 31
+        Top = 92
+        Width = 94
+        Anchors = [akTop, akRight]
+        BorderSpacing.Top = 3
+        BorderSpacing.Right = 3
+        BorderSpacing.Bottom = 3
+        Caption = 'shrink'
+        OnClick = shrinkButtonClick
+        TabOrder = 4
       end
     end
     object Panel4: TPanel
@@ -184,7 +216,7 @@ object GravityMainForm: TGravityMainForm
       AnchorSideRight.Side = asrBottom
       Left = 4
       Height = 177
-      Top = 200
+      Top = 199
       Width = 275
       Anchors = [akTop, akLeft, akRight]
       AutoSize = True
@@ -394,7 +426,7 @@ object GravityMainForm: TGravityMainForm
       AnchorSideTop.Side = asrCenter
       Left = 32
       Height = 20
-      Top = 382
+      Top = 381
       Width = 82
       BorderSpacing.Left = 4
       BorderSpacing.Top = 4
@@ -407,7 +439,7 @@ object GravityMainForm: TGravityMainForm
       AnchorSideTop.Side = asrBottom
       Left = 4
       Height = 23
-      Top = 381
+      Top = 380
       Width = 24
       BorderSpacing.Left = 4
       BorderSpacing.Top = 4
@@ -423,7 +455,7 @@ object GravityMainForm: TGravityMainForm
       AnchorSideBottom.Side = asrBottom
       Left = 209
       Height = 20
-      Top = 506
+      Top = 505
       Width = 70
       Anchors = [akTop, akRight]
       BorderSpacing.Top = 4
@@ -439,7 +471,7 @@ object GravityMainForm: TGravityMainForm
       AnchorSideRight.Control = startBgCalc
       Left = 4
       Height = 31
-      Top = 471
+      Top = 470
       Width = 216
       Anchors = [akTop, akLeft, akRight]
       BorderSpacing.Left = 4
@@ -457,7 +489,7 @@ object GravityMainForm: TGravityMainForm
       AnchorSideBottom.Side = asrBottom
       Left = 4
       Height = 20
-      Top = 506
+      Top = 505
       Width = 80
       BorderSpacing.Left = 4
       BorderSpacing.Top = 4
@@ -471,7 +503,7 @@ object GravityMainForm: TGravityMainForm
       AnchorSideRight.Side = asrBottom
       Left = 224
       Height = 30
-      Top = 471
+      Top = 470
       Width = 55
       Anchors = [akTop, akRight]
       AutoSize = True
@@ -488,7 +520,7 @@ object GravityMainForm: TGravityMainForm
       AnchorSideRight.Side = asrBottom
       Left = 4
       Height = 59
-      Top = 408
+      Top = 407
       Width = 275
       Anchors = [akTop, akLeft, akRight]
       AutoSize = True
