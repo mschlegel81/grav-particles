@@ -13,7 +13,7 @@ USES
   sysutils,
   {$endif}
   Interfaces, // this includes the LCL widgetset
-  Forms, gravParticlesMain, viewWrapper, lazopenglcontext
+  Forms, gravParticlesMain, lazopenglcontext
   { you can add units after this };
 
 {$R *.res}

@@ -5,28 +5,29 @@ UNIT vectors;
 INTERFACE
 USES GL;
 TYPE
-  TVector3=array[0..2] of double;
+  Tfloat  =double;
+  TVector3=array[0..2] of Tfloat;
   PVector3=^TVector3;
   TIntVec3=array[0..2] of longint;
   TMatrix3x3=array[0..2] of TVector3;
 
-FUNCTION vectorOf(CONST x,y,z:single):TVector3;
+FUNCTION vectorOf(CONST x,y,z:Tfloat):TVector3;
 FUNCTION randomInSphere:TVector3;
 FUNCTION randomOnSphere:TVector3;
-OPERATOR * (CONST x:TVector3; CONST y:double):TVector3;
-OPERATOR * (CONST x,y:TVector3):double;
+OPERATOR * (CONST x:TVector3; CONST y:Tfloat):TVector3;
+OPERATOR * (CONST x,y:TVector3):Tfloat;
 OPERATOR +(CONST x,y:TVector3):TVector3;
 OPERATOR -(CONST x,y:TVector3):TVector3;
 OPERATOR -(CONST x,y:TIntVec3):TIntVec3;
-FUNCTION sumOfSquares(CONST x:TVector3):double;
-FUNCTION sqrEuklideanNorm(CONST x:TVector3):double;
-FUNCTION euklideanNorm(CONST x:TVector3):double;
-FUNCTION euklideanNorm(CONST x:TIntVec3):double;
+FUNCTION sumOfSquares(CONST x:TVector3):Tfloat;
+FUNCTION sqrEuklideanNorm(CONST x:TVector3):Tfloat;
+FUNCTION euklideanNorm(CONST x:TVector3):Tfloat;
+FUNCTION euklideanNorm(CONST x:TIntVec3):Tfloat;
 FUNCTION cross(CONST x,y:TVector3):TVector3;
-FUNCTION hsvColor(h,s,v:single):TVector3;
+FUNCTION hsvColor(h,s,v:Tfloat):TVector3;
 
 FUNCTION roundVector(CONST v:TVector3):TIntVec3;
-OPERATOR *(CONST x:TIntVec3; CONST y:double):TVector3;
+OPERATOR *(CONST x:TIntVec3; CONST y:Tfloat):TVector3;
 OPERATOR =(CONST x,y:TIntVec3):boolean;
 
 FUNCTION randomOrthonormalBasis:TMatrix3x3;
@@ -34,7 +35,7 @@ FUNCTION randomOrthonormalBasis:TMatrix3x3;
 CONST ZERO_VECTOR:TVector3=(0,0,0);
 IMPLEMENTATION
 USES math;
-FUNCTION vectorOf(CONST x,y,z:single):TVector3;
+FUNCTION vectorOf(CONST x,y,z:Tfloat):TVector3;
   begin
     result[0]:=x;
     result[1]:=y;
@@ -51,7 +52,7 @@ FUNCTION randomInSphere:TVector3;
   end;
 
 FUNCTION randomOnSphere:TVector3;
-  VAR n:double;
+  VAR n:Tfloat;
   begin
     repeat
       result[0]:=2*random-1;
@@ -62,14 +63,14 @@ FUNCTION randomOnSphere:TVector3;
     result*=1/n;
   end;
 
-OPERATOR * (CONST x:TVector3; CONST y:double):TVector3;
+OPERATOR * (CONST x:TVector3; CONST y:Tfloat):TVector3;
   begin
     result[0]:=x[0]*y;
     result[1]:=x[1]*y;
     result[2]:=x[2]*y;
   end;
 
-OPERATOR * (CONST x,y:TVector3):double;
+OPERATOR * (CONST x,y:TVector3):Tfloat;
   begin
     result:=x[0]*y[0]+x[1]*y[1]+x[2]*y[2];
   end;
@@ -95,22 +96,22 @@ OPERATOR -(CONST x,y:TIntVec3):TIntVec3;
     result[2]:=x[2]-y[2];
   end;
 
-FUNCTION sumOfSquares(CONST x: TVector3): double;
+FUNCTION sumOfSquares(CONST x: TVector3): Tfloat;
   begin
     result:=x[0]*x[0]+x[1]*x[1]+x[2]*x[2];
   end;
 
-FUNCTION sqrEuklideanNorm(CONST x:TVector3):double;
+FUNCTION sqrEuklideanNorm(CONST x:TVector3):Tfloat;
   begin
     result:=x[0]*x[0]+x[1]*x[1]+x[2]*x[2];
   end;
 
-FUNCTION euklideanNorm(CONST x:TVector3):double;
+FUNCTION euklideanNorm(CONST x:TVector3):Tfloat;
   begin
     result:=sqrt(x[0]*x[0]+x[1]*x[1]+x[2]*x[2]);
   end;
 
-FUNCTION euklideanNorm(CONST x:TIntVec3):double;
+FUNCTION euklideanNorm(CONST x:TIntVec3):Tfloat;
   begin
     result:=sqrt(x[0]*x[0]+x[1]*x[1]+x[2]*x[2]);
   end;
@@ -122,9 +123,9 @@ FUNCTION cross(CONST x,y:TVector3):TVector3;
     result[2]:=x[0]*y[1]-x[1]*y[0];
   end;
 
-FUNCTION hsvColor(h,s,v:single):TVector3;
+FUNCTION hsvColor(h,s,v:Tfloat):TVector3;
   VAR hi:byte;
-      p,q,t:single;
+      p,q,t:Tfloat;
   begin
     initialize(result);
     result[0]:=0;
@@ -158,7 +159,7 @@ FUNCTION roundVector(CONST v: TVector3): TIntVec3;
     result[2]:=round(v[2]);
   end;
 
-OPERATOR*(CONST x: TIntVec3; CONST y: double): TVector3;
+OPERATOR*(CONST x: TIntVec3; CONST y: Tfloat): TVector3;
   begin
     result[0]:=x[0]*y;
     result[1]:=x[1]*y;

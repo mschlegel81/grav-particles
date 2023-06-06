@@ -14,6 +14,7 @@ TYPE
 
   TGravityMainForm = class(TForm)
     AutoRotateCheckbox: TCheckBox;
+    ComboBox2: TComboBox;
     shrinkButton: TButton;
     growButton: TButton;
     Label3: TLabel;
@@ -48,7 +49,6 @@ TYPE
     StarsTrackBar: TTrackBar;
     DustTrackBar: TTrackBar;
     PROCEDURE AutoRotateCheckboxChange(Sender: TObject);
-    PROCEDURE ComboBox1Select(Sender: TObject);
     PROCEDURE DustTrackBarChange(Sender: TObject);
     PROCEDURE FormCreate(Sender: TObject);
     PROCEDURE FormDestroy(Sender: TObject);
@@ -83,9 +83,18 @@ IMPLEMENTATION
 { TGravityMainForm }
 
 PROCEDURE TGravityMainForm.FormCreate(Sender: TObject);
+  VAR dim:TDustInitMode;
+      tgt:TsysTarget;
   begin
     viewState.create(OpenGLControl1);
     Application.OnIdle:=@IdleFunc;
+    ComboBox1.items.clear;
+    for dim in TDustInitMode do ComboBox1.items.add(CDustInitModeName[dim]);
+    ComboBox1.ItemIndex:=0;
+
+    ComboBox2.items.clear;
+    for tgt in TsysTarget do ComboBox2.items.add('Target: '+CsysTargetName[tgt]);
+    ComboBox2.ItemIndex:=0;
   end;
 
 PROCEDURE TGravityMainForm.FormDestroy(Sender: TObject);
@@ -108,15 +117,6 @@ PROCEDURE TGravityMainForm.DustTrackBarChange(Sender: TObject);
     dustLabel.caption:='Dust: '+intToStr(dustCount);
   end;
 
-PROCEDURE TGravityMainForm.ComboBox1Select(Sender: TObject);
-  begin
-    CheckBox1.enabled:=ComboBox1.ItemIndex<>3;
-    Checkbox2.enabled:=ComboBox1.ItemIndex<>3;
-    Checkbox3.enabled:=ComboBox1.ItemIndex<>3;
-    CheckBox4.enabled:=ComboBox1.ItemIndex<>3;
-    CheckBox5.enabled:=ComboBox1.ItemIndex<>3;
-  end;
-
 PROCEDURE TGravityMainForm.AutoRotateCheckboxChange(Sender: TObject);
   begin
     viewState.lockXRotation:=not(AutoRotateCheckbox.checked);
@@ -133,18 +133,12 @@ PROCEDURE TGravityMainForm.IdleFunc(Sender: TObject; VAR done: boolean);
 
 PROCEDURE TGravityMainForm.initDustButtonClick(Sender: TObject);
   VAR
-    mode: TDustInitMode;
+    d,mode: TDustInitMode;
     starMask: byte;
+
   begin
-    if ComboBox1.ItemIndex=0 then mode:=dim_stableDisk else
-    if ComboBox1.ItemIndex=1 then mode:=dim_stableOrbit else
-    if ComboBox1.ItemIndex=2 then mode:=dim_randomCloud else
-    if ComboBox1.ItemIndex=4 then mode:=dim_singleRing else
-    if ComboBox1.ItemIndex=5 then mode:=dim_threeRings else
-    if ComboBox1.ItemIndex=6 then mode:=dim_shell else
-    if ComboBox1.ItemIndex=7 then mode:=dim_planetLike else
-    if ComboBox1.ItemIndex=8 then mode:=dim_lonelyCloud else
-                                  mode:=dim_stillBackgroundCloud;
+    mode:=low(TDustInitMode);
+    for d in TDustInitMode do if byte(d)=ComboBox1.ItemIndex then mode:=d;
     starMask:=0;
     if CheckBox1.checked then starMask+=1;
     if Checkbox2.checked then starMask+=2;
@@ -155,16 +149,18 @@ PROCEDURE TGravityMainForm.initDustButtonClick(Sender: TObject);
   end;
 
 PROCEDURE TGravityMainForm.initStarsButtonClick(Sender: TObject);
+  VAR t,tgt:TsysTarget;
   begin
-    viewState.ParticleEngine.initStars(StarsTrackBar.position);
+
+    tgt:=low(TsysTarget);
+    for t in TsysTarget do if byte(t)=ComboBox2.ItemIndex then tgt:=t;
+    viewState.ParticleEngine.initStars(StarsTrackBar.position,tgt);
   end;
 
 PROCEDURE TGravityMainForm.Panel3Resize(Sender: TObject);
   VAR w:longint;
   begin
     w:=(Panel3.width-15) div 2;
-    resetStarsButton.width:=w;
-    initStarsButton.width:=w;
     growButton.width:=w;
     shrinkButton.width:=w;
   end;
@@ -205,7 +201,11 @@ PROCEDURE TGravityMainForm.stopCalcButtonClick(Sender: TObject);
     viewState.ParticleEngine.cachedSystems.destroying:=true;
   end;
 
-CONST DUST_COUNT_TAB:array[0..80] of longint=(0,100,126,141,158,178,200,224,251,282,316,355,398,447,501,562,631,708,794,891,1000,1122,1259,1413,1585,1778,1995,2239,2512,2818,3162,3548,3981,4467,5012,5623,6310,7079,7943,8913,10000,11220,12589,14125,15849,17783,19953,22387,25119,28184,31623,35481,39811,44668,50119,56234,63096,70795,79433,89125,100000,112202,125893,141254,158489,177828,199526,223872,251189,281838,316228,354813,398107,446684,501187,562341,630957,707946,794328,891251,1000000);
+CONST DUST_COUNT_TAB:array[0..80] of longint=(0,100          ,125   ,141   ,158   ,178   ,200   ,224   ,250   ,282   ,316   ,355   ,400   ,447   ,500   ,562   ,631   ,700   ,800   ,900   ,
+                                                1000  ,1122  ,1250  ,1413  ,1585  ,1778  ,2000  ,2239  ,2500  ,2818  ,3162  ,3548  ,4000  ,4467  ,5000  ,5623  ,6310  ,7000  ,8000  ,9000  ,
+                                                10000 ,11220 ,12500 ,14125 ,15849 ,17783 ,20000 ,22387 ,25000 ,28184 ,31623 ,35481 ,40000 ,44668 ,50000 ,56234 ,63096 ,70000 ,80000 ,90000 ,
+                                                100000,112202,125000,141254,158489,177828,200000,223872,250000,281838,316228,354813,400000,446684,500000,562341,630957,700000,800000,900000,
+                                                1000000);
 
 FUNCTION TGravityMainForm.dustCount: longint;
   begin

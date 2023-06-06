@@ -90,7 +90,7 @@ CONSTRUCTOR T_viewState.create(control: TOpenGLControl);
     OpenGLControl:=control;
     OpenGLControl.DoubleBuffered:=true;
     ParticleEngine:=TParticleEngine.create;
-    ParticleEngine.initStars(2);
+    ParticleEngine.initStars(2,none);
     ParticleEngine.initDust(0,255,dim_stableDisk);
     ParticleEngine.dtFactor:=0;
 
@@ -317,17 +317,17 @@ PROCEDURE T_viewState.viewPaint(Sender: TObject);
         LastFrameTicks-=1000;
         frameCount:=0;
       end;
+      ParticleEngine.update(tickDelta,measuredFps<TARGET_FPS);
     end;
 
     if OpenGLControl.MakeCurrent then begin
       if not AreaInitialized then initializeArea;
-      ParticleEngine.update(tickDelta,frameRateControl.measuredFps<frameRateControl.TARGET_FPS);
 
       //Update rotation angles
       if (mouse.isDown<>leftDown) then with rotation do begin
         if not(lockX) then begin
           rx-=rx*0.01*tickDelta;
-          ry+=0.01*tickDelta;
+          ry+=   0.01*tickDelta;
         end;
 
         if ry> 180 then ry-=360;

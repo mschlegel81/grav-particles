@@ -14,7 +14,9 @@ Dust which is neither gravitationally bound nor moves in the general direction o
 ### Stars
 Select how many stars you would like and either randomize a new system or reset the current system to its initial state.
 
-When a system is randomized, one of 100 pre calculated systems is picked. This is biased towards "more stable" systems.
+When a system is randomized, one of 100 pre calculated systems is picked.
+
+You can also grow or shrink the whole system (including the current dust particles). 
 
 ### Dust
 Select how many dust particles are distributed. 
