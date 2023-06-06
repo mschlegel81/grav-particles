@@ -154,19 +154,17 @@ CONSTRUCTOR TCachedSystems.create;
         vDelta   [0]:=infinity; vDelta   [1]:=0;
         rDelta   [0]:=infinity; rDelta   [1]:=0;
       end;
-      for i:=2 to 5 do for j:=0 to 99 do sys[i,j].qualityMeasure:=-infinity;
+      for i:=2 to 5 do for j:=0 to 199 do sys[i,j].qualityMeasure:=-infinity;
       writeln('Could not load cached systems... I will calculate some in a separate thread');
       startBackgroundCalculation;
     end else writeStatistics;
   end;
 
 DESTRUCTOR TCachedSystems.destroy;
-  VAR i:longint;
   begin
     destroying:=true;
     while backgroundRunning>0 do sleep(1);
     enterCriticalSection(sysCs);
-    for i:=2 to 5 do while isInfinite(sys[i,199].qualityMeasure) do prepareSystem(i);
     writeStatistics;
     saveToFile(ChangeFileExt(paramStr(0),'.cached_sys'));
     leaveCriticalSection(sysCs);
