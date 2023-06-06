@@ -66,8 +66,10 @@ TYPE
     PROCEDURE startBgCalcClick(Sender: TObject);
     PROCEDURE stopCalcButtonClick(Sender: TObject);
   private
+    growCount:longint;
     viewState:T_viewState;
     FUNCTION dustCount:longint;
+    PROCEDURE updateGrowShrink;
 
   public
 
@@ -95,6 +97,7 @@ PROCEDURE TGravityMainForm.FormCreate(Sender: TObject);
     ComboBox2.items.clear;
     for tgt in TsysTarget do ComboBox2.items.add('Target: '+CsysTargetName[tgt]);
     ComboBox2.ItemIndex:=0;
+    growCount:=0;
   end;
 
 PROCEDURE TGravityMainForm.FormDestroy(Sender: TObject);
@@ -105,11 +108,15 @@ PROCEDURE TGravityMainForm.FormDestroy(Sender: TObject);
 PROCEDURE TGravityMainForm.growButtonClick(Sender: TObject);
   begin
     viewState.ParticleEngine.multiplySize(sqrt(2));
+    inc(growCount);
+    updateGrowShrink;
   end;
 
 PROCEDURE TGravityMainForm.shrinkButtonClick(Sender: TObject);
   begin
     viewState.ParticleEngine.multiplySize(sqrt(0.5));
+    dec(growCount);
+    updateGrowShrink;
   end;
 
 PROCEDURE TGravityMainForm.DustTrackBarChange(Sender: TObject);
@@ -151,16 +158,17 @@ PROCEDURE TGravityMainForm.initDustButtonClick(Sender: TObject);
 PROCEDURE TGravityMainForm.initStarsButtonClick(Sender: TObject);
   VAR t,tgt:TsysTarget;
   begin
-
     tgt:=low(TsysTarget);
     for t in TsysTarget do if byte(t)=ComboBox2.ItemIndex then tgt:=t;
     viewState.ParticleEngine.initStars(StarsTrackBar.position,tgt);
+    growCount:=0;
+    updateGrowShrink;
   end;
 
 PROCEDURE TGravityMainForm.Panel3Resize(Sender: TObject);
   VAR w:longint;
   begin
-    w:=(Panel3.width-15) div 2;
+    w:=(Panel3.ClientWidth-12) div 2;
     growButton.width:=w;
     shrinkButton.width:=w;
   end;
@@ -173,6 +181,8 @@ PROCEDURE TGravityMainForm.PointSizeTrackBarChange(Sender: TObject);
 PROCEDURE TGravityMainForm.resetStarsButtonClick(Sender: TObject);
   begin
     viewState.ParticleEngine.resetStars;
+    growCount:=0;
+    updateGrowShrink;
   end;
 
 PROCEDURE TGravityMainForm.speedTrackBarChange(Sender: TObject);
@@ -210,6 +220,12 @@ CONST DUST_COUNT_TAB:array[0..80] of longint=(0,100          ,125   ,141   ,158 
 FUNCTION TGravityMainForm.dustCount: longint;
   begin
     result:=DUST_COUNT_TAB[DustTrackBar.position];
+  end;
+
+PROCEDURE TGravityMainForm.updateGrowShrink;
+  begin
+    if growCount<0 then shrinkButton.caption:='shrink ('+intToStr(-growCount)+')' else shrinkButton.caption:='shrink';
+    if growCount>0 then growButton  .caption:='grow ('+intToStr(growCount)+')' else growButton.caption:='grow';
   end;
 
 PROCEDURE TGravityMainForm.SetRecommendedDustButtonClick(Sender: TObject);
