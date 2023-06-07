@@ -321,7 +321,12 @@ PROCEDURE T_viewState.viewPaint(Sender: TObject);
       if smoothPoints then begin
         glEnable(GL_POINT_SMOOTH);
         glHint(GL_POINT_SMOOTH_HINT, GL_NICEST);
-      end else glDisable(GL_POINT_SMOOTH);
+        glEnable(GL_LINE_SMOOTH);
+        glHint(GL_LINE_SMOOTH_HINT,GL_NICEST);
+      end else begin
+        glDisable(GL_POINT_SMOOTH);
+        glDisable(GL_LINE_SMOOTH);
+      end;
 
       //Update rotation angles
       if (mouse.isDown<>leftDown) then with rotation do begin

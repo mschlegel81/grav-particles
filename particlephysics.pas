@@ -123,7 +123,7 @@ IMPLEMENTATION
 USES math,sysutils,LCLProc;
 CONST maxTimeStep=1E-3;
       maxDustTimeStep=1E-1;
-      trajectoryMaxTime=20;
+      trajectoryMaxTime=50;
 
 FUNCTION dtOf(CONST aSqrMax:double):double;
   begin
@@ -319,14 +319,12 @@ PROCEDURE TCachedSystems.prepareSystem(CONST starCount: longint; CONST targetQua
         p,v,a,aNew:array[0..4] of TVector3;
         rMin,rMax,vMin,vMax:array[0..4] of Tfloat;
 
-        totalDistance:Tfloat=0;
-        invTotalMass:Tfloat=0;
         maxRadius:Tfloat=0;
         dfc:Tfloat;
         maxMass:Tfloat=0;
         minMass:Tfloat=infinity;
         dt   :Tfloat=maxTimeStep;
-
+        totalTime:Tfloat=0;
     PROCEDURE finalize;
       VAR k:longint;
       begin
@@ -351,16 +349,13 @@ PROCEDURE TCachedSystems.prepareSystem(CONST starCount: longint; CONST targetQua
           rMax[i]:=rMin[i];
           vMin[i]:=euklideanNorm(v[i]);
           vMax[i]:=vMin[i];
-          invTotalMass+=stars[i].mass;
         end;
-        invTotalMass:=1/invTotalMass;
         qualityMeasure:=0;
         massDelta:=ln(maxMass/minMass);
         dt:=maxTimeStep/100;
         while (qualityMeasure<targetQuality) do begin
           for i:=0 to starCount-1 do begin
             step:=v[i]*dt+ a[i]*(dt*dt*0.5);
-            totalDistance+=euklideanNorm(step)*stars[i].mass; //heavy stars' movement weighs more...
             p[i]         +=              step;
 
             aNew[i]:=ZERO_VECTOR;
@@ -395,8 +390,9 @@ PROCEDURE TCachedSystems.prepareSystem(CONST starCount: longint; CONST targetQua
           a:=aNew;
           dfc:=0;
           for i:=0 to starCount-1 do dfc:=max(dfc,sqrEuklideanNorm(a[i]));
+          totalTime+=dt;
           dt:=dtOf(dfc);
-          qualityMeasure:=totalDistance*invTotalMass;
+          qualityMeasure:=totalTime;
         end;
         endType:=0;
         finalize;
@@ -475,22 +471,26 @@ PROCEDURE TCachedSystems.prepareSystem(CONST starCount: longint; CONST targetQua
     end;
 
     evaluateSystem(newSystem,endType);
-    if endType=ENDED_BY_COLLISION then begin
+    if endType=ENDED_BY_COLLISION then while endType=ENDED_BY_COLLISION do begin
       //If this happens there is a chance that a larger system (with consequently lower probability of collisions) will yield better quality
       grownSystem:=Scaled(newSystem,2);
       evaluateSystem(grownSystem,endType);
       {$ifdef debugMode}
       writeln('          After scaling up  : ',newSystem.qualityMeasure:10:3,' -> ',grownSystem.qualityMeasure:10:3,' [',endType,']');
       {$endif}
-      if grownSystem.qualityMeasure>newSystem.qualityMeasure then newSystem:=grownSystem;
-    end else if endType=ENDED_BY_ESCAPE then begin
+      if grownSystem.qualityMeasure>newSystem.qualityMeasure
+      then newSystem:=grownSystem
+      else endType:=0;
+    end else if endType=ENDED_BY_ESCAPE then while endType=ENDED_BY_ESCAPE do begin
       //If this happens there is a chance that a smaller system will yield better quality
       grownSystem:=Scaled(newSystem,0.5);
       evaluateSystem(grownSystem,endType);
       {$ifdef debugMode}
       writeln('          After scaling down: ',newSystem.qualityMeasure:10:3,' -> ',grownSystem.qualityMeasure:10:3,' [',endType,']');
       {$endif}
-      if grownSystem.qualityMeasure>newSystem.qualityMeasure then newSystem:=grownSystem;
+      if grownSystem.qualityMeasure>newSystem.qualityMeasure
+      then newSystem:=grownSystem
+      else endType:=0;
     end;
 
     enterCriticalSection(sysCs);
