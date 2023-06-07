@@ -1,0 +1,28 @@
+
+
+
+
+
+
+parseSystem(line:String)->begin
+  local N:=line.split(';').trim.softCast.filter(::isNumeric);
+  local qualityMeasure:=N[0];
+  local stars:=N.tail.chunkMap(7,(star)->['mass'=>star[0],'p'=>star[[1..3]],'v'=>star[[4..6]]].toMap).toList;
+
+  ["qualityMeasure"=>qualityMeasure,
+   "size"=>stars.size,
+   "stars"=>stars.sort((s)->-s['mass'])].toMap;
+end;
+
+memoized allSystems->fileLines('gravity.cached_sys.txt').pMap(::parseSystem).toList;
+
+massRatio(sys:Map)->begin
+  local masses:=sys['stars'].getInner('mass');
+  masses.tail/masses.head;
+end;
+
+kineticEnergy(sys:Map)->sys['stars'].each(star,star['mass']*euklideanNorm(star['v'])²,+);
+
+allSystems.filter((s)->s['size']=3).map(::kineticEnergy).toList.plot;
+allSystems.filter((s)->s['size']=2).map(::kineticEnergy).toList.addPlot;
+allSystems.filter((s)->s['size']=4).map(::kineticEnergy).toList.addPlot;

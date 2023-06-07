@@ -14,6 +14,10 @@ TYPE
 
   TGravityMainForm = class(TForm)
     AutoRotateCheckbox: TCheckBox;
+    SmoothPointsCheckbox: TCheckBox;
+    SmoothPointsLabel: TLabel;
+    ComboBox3: TComboBox;
+    initFromPresetButton: TButton;
     ComboBox2: TComboBox;
     shrinkButton: TButton;
     growButton: TButton;
@@ -55,17 +59,20 @@ TYPE
     PROCEDURE growButtonClick(Sender: TObject);
     PROCEDURE IdleFunc(Sender: TObject; VAR done: boolean);
     PROCEDURE initDustButtonClick(Sender: TObject);
+    PROCEDURE initFromPresetButtonClick(Sender: TObject);
     PROCEDURE initStarsButtonClick(Sender: TObject);
     PROCEDURE Panel3Resize(Sender: TObject);
     PROCEDURE PointSizeTrackBarChange(Sender: TObject);
     PROCEDURE resetStarsButtonClick(Sender: TObject);
     PROCEDURE SetRecommendedDustButtonClick(Sender: TObject);
     PROCEDURE shrinkButtonClick(Sender: TObject);
+    PROCEDURE SmoothPointsCheckboxChange(Sender: TObject);
     PROCEDURE speedTrackBarChange(Sender: TObject);
     PROCEDURE StarsTrackBarChange(Sender: TObject);
     PROCEDURE startBgCalcClick(Sender: TObject);
     PROCEDURE stopCalcButtonClick(Sender: TObject);
   private
+    lastLabelUpdate:qword;
     growCount:longint;
     viewState:T_viewState;
     FUNCTION dustCount:longint;
@@ -87,7 +94,9 @@ IMPLEMENTATION
 PROCEDURE TGravityMainForm.FormCreate(Sender: TObject);
   VAR dim:TDustInitMode;
       tgt:TsysTarget;
+      i:longint;
   begin
+    lastLabelUpdate:=0;
     viewState.create(OpenGLControl1);
     Application.OnIdle:=@IdleFunc;
     ComboBox1.items.clear;
@@ -98,6 +107,10 @@ PROCEDURE TGravityMainForm.FormCreate(Sender: TObject);
     for tgt in TsysTarget do ComboBox2.items.add('Target: '+CsysTargetName[tgt]);
     ComboBox2.ItemIndex:=0;
     growCount:=0;
+
+    ComboBox3.items.clear;
+    for i:=0 to viewState.ParticleEngine.cachedSystems.predefinedSystemCount-1 do ComboBox3.items.add('#'+intToStr(i));
+    ComboBox3.ItemIndex:=0;
   end;
 
 PROCEDURE TGravityMainForm.FormDestroy(Sender: TObject);
@@ -119,6 +132,11 @@ PROCEDURE TGravityMainForm.shrinkButtonClick(Sender: TObject);
     updateGrowShrink;
   end;
 
+PROCEDURE TGravityMainForm.SmoothPointsCheckboxChange(Sender: TObject);
+  begin
+    viewState.smoothPoints:=SmoothPointsCheckbox.checked;
+  end;
+
 PROCEDURE TGravityMainForm.DustTrackBarChange(Sender: TObject);
   begin
     dustLabel.caption:='Dust: '+intToStr(dustCount);
@@ -130,12 +148,24 @@ PROCEDURE TGravityMainForm.AutoRotateCheckboxChange(Sender: TObject);
   end;
 
 PROCEDURE TGravityMainForm.IdleFunc(Sender: TObject; VAR done: boolean);
+  VAR t:qword;
   begin
     OpenGLControl1.Invalidate;
     done:=false; // tell lcl to handle messages and return immediatly
-    FPS_LABEL.caption:=intToStr(round(viewState.getFps))+' fps';
-    TIME_LABEL.caption:='t='+floatToStrF(viewState.ParticleEngine.totalTime,ffFixed,3,3);
-    dustRemainingLabel.caption:='Remaining: '+intToStr(viewState.ParticleEngine.dustCount);
+
+    t:=GetTickCount64;
+    if t>lastLabelUpdate+200 then begin
+      lastLabelUpdate:=t;
+      FPS_LABEL.caption:=intToStr(round(viewState.getFps))+' fps';
+      TIME_LABEL.caption:='t='+floatToStrF(viewState.ParticleEngine.totalTime,ffFixed,3,3);
+      dustRemainingLabel.caption:='Remaining: '+intToStr(viewState.ParticleEngine.dustCount);
+      t:=viewState.ParticleEngine.starCount;
+      CheckBox5.visible:=t>=5;
+      CheckBox4.visible:=t>=4;
+      Checkbox3.visible:=t>=3;
+      Checkbox2.visible:=t>=2;
+    end;
+
   end;
 
 PROCEDURE TGravityMainForm.initDustButtonClick(Sender: TObject);
@@ -153,6 +183,16 @@ PROCEDURE TGravityMainForm.initDustButtonClick(Sender: TObject);
     if CheckBox4.checked then starMask+=8;
     if CheckBox5.checked then starMask+=16;
     viewState.ParticleEngine.initDust(dustCount,starMask,mode);
+  end;
+
+PROCEDURE TGravityMainForm.initFromPresetButtonClick(Sender: TObject);
+  VAR presetIndex:longint;
+  begin
+    presetIndex:=ComboBox3.ItemIndex;
+    if (presetIndex<0) or (presetIndex>255) then exit;
+    viewState.ParticleEngine.initPresetStars(presetIndex);
+    growCount:=0;
+    updateGrowShrink;
   end;
 
 PROCEDURE TGravityMainForm.initStarsButtonClick(Sender: TObject);
@@ -179,9 +219,14 @@ PROCEDURE TGravityMainForm.PointSizeTrackBarChange(Sender: TObject);
   end;
 
 PROCEDURE TGravityMainForm.resetStarsButtonClick(Sender: TObject);
+  VAR factor:double;
   begin
+    if growCount<>0 then begin
+      factor:=exp(ln(2)*growCount/2);
+      viewState.ParticleEngine.multiplySize(1/factor);
+    end;
     viewState.ParticleEngine.resetStars;
-    growCount:=0;
+    if growCount<>0 then viewState.ParticleEngine.multiplySize(factor);
     updateGrowShrink;
   end;
 
@@ -195,10 +240,6 @@ PROCEDURE TGravityMainForm.speedTrackBarChange(Sender: TObject);
 PROCEDURE TGravityMainForm.StarsTrackBarChange(Sender: TObject);
   begin
     starsLabel.caption:='Stars: '+intToStr(StarsTrackBar.position);
-    CheckBox5.visible:=StarsTrackBar.position>=5;
-    CheckBox4.visible:=StarsTrackBar.position>=4;
-    Checkbox3.visible:=StarsTrackBar.position>=3;
-    Checkbox2.visible:=StarsTrackBar.position>=2;
   end;
 
 PROCEDURE TGravityMainForm.startBgCalcClick(Sender: TObject);

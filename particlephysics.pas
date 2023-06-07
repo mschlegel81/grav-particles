@@ -7,7 +7,10 @@ USES vectors,GL,serializationUtil;
 
 TYPE
   TStar = record
-    trajectory:array of TVector3;
+    trajectory:array of record
+      p:TVector3;
+      time:double;
+    end;
     p,v,a,color:TVector3;
     radius,mass : Tfloat;
   end;
@@ -57,10 +60,12 @@ TYPE
     FUNCTION getSerialVersion:dword; virtual;
     FUNCTION loadFromStream(VAR stream:T_bufferedInputStreamWrapper):boolean; virtual;
     PROCEDURE saveToStream(VAR stream:T_bufferedOutputStreamWrapper); virtual;
-    PROCEDURE prepareSystem(CONST starCount:longint);
+    PROCEDURE prepareSystem(CONST starCount:longint; CONST targetQuality:double);
     PROCEDURE prepareAnySystem;
     FUNCTION getSystem(CONST starCount:longint; CONST target:TsysTarget):TStarSys;
     PROCEDURE startBackgroundCalculation;
+    FUNCTION predefinedSystemCount:longint;
+    FUNCTION getPredefinedSystem(CONST index:byte):TStarSys;
   end;
 
   TDustInitMode = (dim_stableDisk,
@@ -92,7 +97,6 @@ TYPE
     star :  array of TStar;
     dust :  array of TParticle;
     removalCounter:longint;
-    base:array of TMatrix3x3;
     PROCEDURE MoveParticles(CONST dt:Tfloat; CONST stressed:boolean);
   public
     cachedSystems:TCachedSystems;
@@ -105,10 +109,12 @@ TYPE
     PROCEDURE DrawParticles(CONST ParticleList: GLuint; CONST pointSize:Tfloat);
 
     PROCEDURE initDust(CONST particleCount:longint; starMask:byte; CONST mode:TDustInitMode);
+    PROCEDURE initPresetStars(CONST presetIndex:byte);
     PROCEDURE initStars(starCount:longint;  CONST target:TsysTarget);
     PROCEDURE initStars(CONST sys:TStarSys);
     PROCEDURE resetStars;
     FUNCTION dustCount:longint;
+    FUNCTION starCount:longint;
     PROCEDURE multiplySize(CONST factor:Tfloat);
 
   end;
@@ -117,6 +123,22 @@ IMPLEMENTATION
 USES math,sysutils,LCLProc;
 CONST maxTimeStep=1E-3;
       maxDustTimeStep=1E-1;
+      trajectoryMaxTime=20;
+
+FUNCTION dtOf(CONST aSqrMax:double):double;
+  begin
+    result:=sqrt(1E-6/sqrt(aSqrMax));
+    if result>maxTimeStep then result:=maxTimeStep;
+  end;
+
+FUNCTION dtOf(CONST aSqrMax, totalStep:double):double;
+  begin
+    result:=dtOf(aSqrMax);
+    result:=ceil(totalStep/result);
+    if result<=0
+    then result:=totalStep
+    else result:=totalStep/result;
+  end;
 
 FUNCTION accelFactor(CONST pSelf,pDrawnTowards:TVector3):TVector3; inline;
   VAR f:Tfloat;
@@ -161,12 +183,15 @@ CONSTRUCTOR TCachedSystems.create;
   end;
 
 DESTRUCTOR TCachedSystems.destroy;
+  VAR i:longint;
   begin
     destroying:=true;
+    for i:=2 to 5 do while isInfinite(sys[i,199].qualityMeasure) do prepareSystem(i,1);
     while backgroundRunning>0 do sleep(1);
     enterCriticalSection(sysCs);
     writeStatistics;
     saveToFile(ChangeFileExt(paramStr(0),'.cached_sys'));
+    writeDetails;
     leaveCriticalSection(sysCs);
     doneCriticalSection(sysCs);
   end;
@@ -185,24 +210,28 @@ PROCEDURE TCachedSystems.writeStatistics;
   end;
 
 PROCEDURE TCachedSystems.writeDetails;
+  VAR handle:textFile;
   PROCEDURE writeSys(CONST sys:TStarSys);
     VAR k:longint;
     begin
-      write(sys.qualityMeasure,';');
-      for k:=0 to length(sys.stars)-1 do write(sys.stars[k].mass,';',
+      write(handle,sys.qualityMeasure,';');
+      for k:=0 to length(sys.stars)-1 do write(handle,
+                                               sys.stars[k].mass,';',
                                                sys.stars[k].p[0],';',
                                                sys.stars[k].p[1],';',
                                                sys.stars[k].p[2],';',
                                                sys.stars[k].v[0],';',
                                                sys.stars[k].v[1],';',
                                                sys.stars[k].v[2],';');
-      writeln;
+      writeln(handle,'');
     end;
 
   VAR i,j:longint;
   begin
+    assign(handle,ChangeFileExt(paramStr(0),'.cached_sys.txt'));
+    rewrite(handle);
     for i:=2 to 5 do for j:=0 to 199 do writeSys(sys[i,j]);
-
+    close(handle);
   end;
 
 FUNCTION TCachedSystems.getSerialVersion: dword;
@@ -277,15 +306,14 @@ PROCEDURE multiplyStarMass(VAR star:TStar; CONST factor:Tfloat);
                          max(0,min(1,x-2)));
   end;
 
-PROCEDURE TCachedSystems.prepareSystem(CONST starCount: longint);
+PROCEDURE TCachedSystems.prepareSystem(CONST starCount: longint; CONST targetQuality:double);
+  CONST ENDED_BY_COLLISION=1;
+        ENDED_BY_ESCAPE=2;
   VAR i:longint;
       totalMass:Tfloat;
       posCenter,velCenter:TVector3;
 
-  PROCEDURE evaluateSystem(VAR sys:TStarSys);
-    CONST dt   :Tfloat=maxTimeStep;
-          dtdt2:Tfloat=maxTimeStep*maxTimeStep*0.5;
-          dtHalf:Tfloat=maxTimeStep*0.5;
+  PROCEDURE evaluateSystem(VAR sys:TStarSys; OUT endType:byte);
     VAR accel,step:TVector3;
         i,j:longint;
         p,v,a,aNew:array[0..4] of TVector3;
@@ -297,6 +325,7 @@ PROCEDURE TCachedSystems.prepareSystem(CONST starCount: longint);
         dfc:Tfloat;
         maxMass:Tfloat=0;
         minMass:Tfloat=infinity;
+        dt   :Tfloat=maxTimeStep;
 
     PROCEDURE finalize;
       VAR k:longint;
@@ -327,10 +356,10 @@ PROCEDURE TCachedSystems.prepareSystem(CONST starCount: longint);
         invTotalMass:=1/invTotalMass;
         qualityMeasure:=0;
         massDelta:=ln(maxMass/minMass);
-
-        while (qualityMeasure<10000) do begin
+        dt:=maxTimeStep/100;
+        while (qualityMeasure<targetQuality) do begin
           for i:=0 to starCount-1 do begin
-            step:=v[i]*dt+ a[i]*dtdt2;
+            step:=v[i]*dt+ a[i]*(dt*dt*0.5);
             totalDistance+=euklideanNorm(step)*stars[i].mass; //heavy stars' movement weighs more...
             p[i]         +=              step;
 
@@ -341,6 +370,7 @@ PROCEDURE TCachedSystems.prepareSystem(CONST starCount: longint);
 
             if dfc>maxRadius then maxRadius:=dfc;
             if dfc>400 then begin
+              endType:=ENDED_BY_ESCAPE;
               finalize;
               exit; //drifting apart
             end;
@@ -351,24 +381,44 @@ PROCEDURE TCachedSystems.prepareSystem(CONST starCount: longint);
             aNew[j]-=accel*stars[i].mass;
             //Collision
             if euklideanNorm(p[i]-p[j])<(stars[i].radius+stars[j].radius) then begin
+              endType:=ENDED_BY_COLLISION;
               finalize;
               exit;
             end;
           end;
           for i:=0 to starCount-1 do begin
-            v[i]+=(a[i]+aNew[i])*dtHalf;
+            v[i]+=(a[i]+aNew[i])*(dt*0.5);
             dfc:=sqrEuklideanNorm(v[i]);
             vMax[i]:=max(vMax[i],dfc);
             vMin[i]:=min(vMin[i],dfc);
           end;
           a:=aNew;
+          dfc:=0;
+          for i:=0 to starCount-1 do dfc:=max(dfc,sqrEuklideanNorm(a[i]));
+          dt:=dtOf(dfc);
           qualityMeasure:=totalDistance*invTotalMass;
         end;
+        endType:=0;
         finalize;
       end;
     end;
 
-  VAR newSystem:TStarSys;
+  FUNCTION Scaled(CONST toClone:TStarSys; CONST scalingFactor:double):TStarSys;
+    VAR i:longint;
+    begin
+      result.qualityMeasure:=0;
+      result.massDelta:=0;
+      result.vDelta:=0;
+      result.rDelta:=0;
+      setLength(result.stars,length(toClone.stars));
+      for i:=0 to length(toClone.stars)-1 do result.stars[i]:=toClone.stars[i];
+      for i:=0 to length(result.stars)-1 do with result.stars[i] do begin
+        p*=scalingFactor;
+        v*=1/sqrt(scalingFactor);
+      end;
+    end;
+
+  VAR newSystem,grownSystem:TStarSys;
       closeToOther:boolean;
       boundToOther:boolean;
       j:longint;
@@ -376,11 +426,13 @@ PROCEDURE TCachedSystems.prepareSystem(CONST starCount: longint);
       maxRadius:Tfloat=0;
       minDistance:Tfloat=infinity;
       beta:Tfloat;
+      endType:byte;
   begin
     totalMass:=0;
     posCenter:=ZERO_VECTOR;
     velCenter:=ZERO_VECTOR;
     setLength(newSystem.stars,starCount);
+    if random<0.1 then beta:=0 else beta:=0.5+2*random;
     for i:=0 to length(newSystem.stars)-1 do with newSystem.stars[i] do begin
       randomStarStats(radius,mass,color);
       if mass>maxMass then maxMass:=mass;
@@ -390,7 +442,7 @@ PROCEDURE TCachedSystems.prepareSystem(CONST starCount: longint);
         for j:=0 to i-1 do closeToOther:=closeToOther or (euklideanNorm(p-newSystem.stars[j].p)<2*(radius+newSystem.stars[j].radius));
       until not(closeToOther);
       repeat
-        v:=randomInSphere*2.5;
+        v:=randomInSphere*beta;
         boundToOther:=i=0;
         for j:=0 to i-1 do boundToOther:=boundToOther or (sqrEuklideanNorm(v-newSystem.stars[j].v)*euklideanNorm(p-newSystem.stars[j].p)<1.95*max(newSystem.stars[j].mass,newSystem.stars[i].mass))
       until boundToOther;
@@ -399,7 +451,7 @@ PROCEDURE TCachedSystems.prepareSystem(CONST starCount: longint);
       posCenter+=p*mass;
       velCenter+=v*mass;
     end;
-    newSystem.qualityMeasure:=0;
+    //Always centralize system:
     posCenter*=(1/totalMass);
     velCenter*=(1/totalMass);
     for i:=0 to length(newSystem.stars)-1 do with newSystem.stars[i] do begin
@@ -407,19 +459,43 @@ PROCEDURE TCachedSystems.prepareSystem(CONST starCount: longint);
       v-=velCenter;
     end;
 
-    maxMass:=10/maxMass;
-    for i:=0 to length(newSystem.stars)-1 do begin
-      multiplyStarMass(newSystem.stars[i],maxMass);
-      maxRadius:=max(maxRadius,newSystem.stars[i].radius);
-      for j:=0 to i-1 do minDistance:=min(minDistance,euklideanNorm(newSystem.stars[i].p-newSystem.stars[j].p));
+    //Maximize mass with a probability of 1/3
+    if random<1/3 then begin
+      maxMass:=10/maxMass;
+      for i:=0 to length(newSystem.stars)-1 do begin
+        multiplyStarMass(newSystem.stars[i],maxMass);
+        maxRadius:=max(maxRadius,newSystem.stars[i].radius);
+        for j:=0 to i-1 do minDistance:=min(minDistance,euklideanNorm(newSystem.stars[i].p-newSystem.stars[j].p));
+      end;
     end;
-    beta:=(4+10*random)*maxRadius/minDistance;
-    if beta<1 then for i:=0 to length(newSystem.stars)-1 do begin
-      newSystem.stars[i].p*=beta;
-      newSystem.stars[i].v*=1/sqrt(beta);
+    //Move stars closer together with a probability of 1/2
+    if random<1/2 then begin
+      beta:=(4+10*random)*maxRadius/minDistance;
+      if beta<1 then for i:=0 to length(newSystem.stars)-1 do begin
+        newSystem.stars[i].p*=beta;
+        newSystem.stars[i].v*=1/sqrt(beta);
+      end;
     end;
 
-    evaluateSystem(newSystem);
+    evaluateSystem(newSystem,endType);
+    if endType=ENDED_BY_COLLISION then begin
+      //If this happens there is a chance that a larger system (with consequently lower probability of collisions) will yield better quality
+      grownSystem:=Scaled(newSystem,2);
+      evaluateSystem(grownSystem,endType);
+      {$ifdef debugMode}
+      writeln('          After scaling up  : ',newSystem.qualityMeasure:10:3,' -> ',grownSystem.qualityMeasure:10:3,' [',endType,']');
+      {$endif}
+      if grownSystem.qualityMeasure>newSystem.qualityMeasure then newSystem:=grownSystem;
+    end else if endType=ENDED_BY_ESCAPE then begin
+      //If this happens there is a chance that a smaller system will yield better quality
+      grownSystem:=Scaled(newSystem,0.5);
+      evaluateSystem(grownSystem,endType);
+      {$ifdef debugMode}
+      writeln('          After scaling down: ',newSystem.qualityMeasure:10:3,' -> ',grownSystem.qualityMeasure:10:3,' [',endType,']');
+      {$endif}
+      if grownSystem.qualityMeasure>newSystem.qualityMeasure then newSystem:=grownSystem;
+    end;
+
     enterCriticalSection(sysCs);
     if newSystem.rDelta   <sysRange[starCount].rDelta   [0] then sysRange[starCount].rDelta   [0]:=newSystem.rDelta;
     if newSystem.rDelta   >sysRange[starCount].rDelta   [1] then sysRange[starCount].rDelta   [1]:=newSystem.rDelta;
@@ -429,6 +505,7 @@ PROCEDURE TCachedSystems.prepareSystem(CONST starCount: longint);
     if newSystem.massDelta>sysRange[starCount].massDelta[1] then sysRange[starCount].massDelta[1]:=newSystem.massDelta;
 
     if newSystem.qualityMeasure>sys[starCount,199].qualityMeasure then begin
+      grownSystem.qualityMeasure:=newSystem.qualityMeasure;
       sys[starCount,199]:=newSystem;
       i:=199;
       while (i>0) and (sys[starCount,i-1].qualityMeasure<sys[starCount,i].qualityMeasure) do begin
@@ -437,7 +514,7 @@ PROCEDURE TCachedSystems.prepareSystem(CONST starCount: longint);
         sys[starCount,i]:=newSystem;
         dec(i);
       end;
-      writeln('Created new system of ',starCount,' stars with quality measure: ',newSystem.qualityMeasure:10:3,', ranked ',i);
+      writeln('Created new system of ',starCount,' stars with quality measure: ',grownSystem.qualityMeasure:10:3,', ranked ',i);
       inc(statCounter);
       if statCounter>=100 then writeStatistics;
     end;
@@ -448,8 +525,14 @@ PROCEDURE TCachedSystems.prepareAnySystem;
   VAR i:longint;
       k:longint=2;
   begin
+    for i:=0 to 199 do
+    for k:=2 to 5 do if isInfinite(sys[k,i].qualityMeasure) then begin
+      prepareSystem(k,10000);
+      exit;
+    end;
+    k:=2;
     for i:=3 to 5 do if sys[i,199].qualityMeasure<sys[k,199].qualityMeasure then k:=i;
-    prepareSystem(k);
+    prepareSystem(k,10000);
   end;
 
 FUNCTION TCachedSystems.getSystem(CONST starCount: longint; CONST target:TsysTarget): TStarSys;
@@ -466,6 +549,13 @@ FUNCTION TCachedSystems.getSystem(CONST starCount: longint; CONST target:TsysTar
       end;
     end;
 
+  FUNCTION biasedRandom:longint;
+    begin
+      repeat
+        result:=random(200);
+      until random>result/200;
+    end;
+
   VAR i:longint;
       alternative:TStarSys;
   begin
@@ -478,13 +568,13 @@ FUNCTION TCachedSystems.getSystem(CONST starCount: longint; CONST target:TsysTar
       end;
     end else begin
       enterCriticalSection(sysCs);
-      result:=sys[starCount,random(200)];
+      result:=sys[starCount,biasedRandom];
       if isInfinite(result.qualityMeasure) then begin
-        while isInfinite(sys[starCount,0].qualityMeasure) do prepareSystem(starCount);
+        while isInfinite(sys[starCount,0].qualityMeasure) do prepareSystem(starCount,1);
         result:=sys[starCount,0];
       end else begin
         if target<>none then for i:=0 to 19 do begin
-          alternative:=sys[starCount,random(200)];
+          alternative:=sys[starCount,biasedRandom];
           if isBetter(alternative,result)
           then result:=alternative;
         end;
@@ -500,6 +590,72 @@ PROCEDURE TCachedSystems.startBackgroundCalculation;
     interLockedIncrement(backgroundRunning);
     writeln('Started new background calculation thread; ',backgroundRunning,' are running');
     beginThread(@makeSystemsInBackground,@self);
+  end;
+
+FUNCTION TCachedSystems.predefinedSystemCount:longint;
+  begin
+    result:=4;
+  end;
+
+FUNCTION TCachedSystems.getPredefinedSystem(CONST index:byte):TStarSys;
+  FUNCTION planar3BodyOf(CONST x0,y0,x1,y1,x2,y2,vx0,vy0,vx1,vy1,vx2,vy2:double):TStarSys;
+    begin
+      setLength(result.stars,3);
+      result.stars[0].radius:=0.1;
+      result.stars[1].radius:=0.1;
+      result.stars[2].radius:=0.1;
+      result.stars[0].mass:=1;
+      result.stars[1].mass:=1;
+      result.stars[2].mass:=1;
+      result.stars[0].color:=vectorOf(1,0  ,0);
+      result.stars[1].color:=vectorOf(1,0.5,0);
+      result.stars[2].color:=vectorOf(1,1  ,0);
+
+      result.stars[0].p:=vectorOf(x0,y0,0);
+      result.stars[1].p:=vectorOf(x1,y1,0);
+      result.stars[2].p:=vectorOf(x2,y2,0);
+      result.stars[0].v:=vectorOf(vx0,vy0,0);
+      result.stars[1].v:=vectorOf(vx1,vy1,0);
+      result.stars[2].v:=vectorOf(vx2,vy2,0);
+      result.stars[0].a:=ZERO_VECTOR;
+      result.stars[1].a:=ZERO_VECTOR;
+      result.stars[2].a:=ZERO_VECTOR;
+    end;
+
+  FUNCTION planar3BodyOf(CONST vx,vy:double):TStarSys;
+    begin
+      result:=planar3BodyOf(-1,0,
+                             1,0,
+                             0,0,vx,vy,
+                                 vx,vy,-2*vx,-2*vy);
+    end;
+
+  FUNCTION planar2BodyOf(CONST m0,m1,v:double):TStarSys;
+    begin
+      setLength(result.stars,2);
+      result.stars[0].radius:=0.1;
+      result.stars[1].radius:=0.1;
+      result.stars[0].mass:=m0;
+      result.stars[1].mass:=m1;
+      result.stars[0].color:=vectorOf( 0,0 ,0.6);
+      result.stars[1].color:=vectorOf( 1,1 ,0.4);
+
+      result.stars[0].p:=vectorOf( 1,0  ,0);
+      result.stars[1].p:=vectorOf(-m0/m1,0  ,0);
+      result.stars[0].v:=vectorOf(0, v,0);
+      result.stars[1].v:=vectorOf(0,-m0/m1*v,0);
+      result.stars[0].a:=ZERO_VECTOR;
+      result.stars[1].a:=ZERO_VECTOR;
+    end;
+
+  begin
+    case index of
+      0: result:=planar2BodyOf(0.1,10,pi);
+      1: result:=planar3BodyOf(-0.97000436, 0.24308753,0,0,0.97000436,-0.24308753, 0.4662036850, 0.4323657300,-0.93240737, -0.86473146,0.4662036850, 0.4323657300);
+      2: result:=planar2BodyOf(1,1,0.5);
+      3: result:=planar2BodyOf(1,1,1/3);
+    end;
+    lastResponse:=result;
   end;
 
 FUNCTION TStarSys.loadFromStream(VAR stream: T_bufferedInputStreamWrapper): boolean;
@@ -546,11 +702,13 @@ VAR starTicks:qword=0;
     sampleCount:longint=0;
 PROCEDURE TParticleEngine.MoveParticles(CONST dt: Tfloat; CONST stressed:boolean);
   PROCEDURE moveStars;
-    VAR i,j:longint;
-        pm,vm:TVector3;
+    VAR i,j,k:longint;
+        pm,vm,am:TVector3;
+        aMax : Tfloat;
         dtEff: Tfloat;
         dtRest:Tfloat;
         previousAcceleration:array[0..4] of TVector3;
+        anyRemoved:boolean=false;
     PROCEDURE updateAccelerations;
       VAR i,j:longint;
           af:TVector3;
@@ -569,9 +727,29 @@ PROCEDURE TParticleEngine.MoveParticles(CONST dt: Tfloat; CONST stressed:boolean
 
     begin
       dtRest:=dt;
+      //Cleanup trajectories max. 1x per macro time step:
+      for k:=0 to length(star)-1 do with star[k] do begin
+        while (length(trajectory)>1) and (trajectory[0].time<totalTime-trajectoryMaxTime) do begin
+          for j:=0 to length(trajectory)-2 do trajectory[j]:=trajectory[j+1];
+          setLength(trajectory,length(trajectory)-1);
+        end;
+        if length(trajectory)>10 then repeat
+          anyRemoved:=false;
+          j:=2;
+          while (j<length(trajectory)) and (sqrEuklideanNorm(trajectory[j].p-trajectory[0].p)>0.01) do inc(j);
+          if j<length(trajectory) then begin
+            for j:=0 to length(trajectory)-2 do trajectory[j]:=trajectory[j+1];
+            setLength(trajectory,length(trajectory)-1);
+            anyRemoved:=true;
+          end;
+        until (length(trajectory)<10) or not(anyRemoved);
+      end;
+      anyRemoved:=false;
+
       while dtRest>0 do begin
-        //Time step control:
-        dtEff:=dtRest/ceil(dtRest/maxTimeStep);
+        aMax:=0;
+        for i:=0 to length(star)-1 do aMax:=max(aMax,sqrEuklideanNorm(star[i].a));
+        dtEff:=dtOf(aMax,dtRest);
         dtRest-=dtEff;
 
         for i:=0 to length(star)-1 do with star[i] do p+=v*dtEff+a*(dtEff*dtEff*0.5);
@@ -581,39 +759,43 @@ PROCEDURE TParticleEngine.MoveParticles(CONST dt: Tfloat; CONST stressed:boolean
           v+=(previousAcceleration[i]+a)*(dtEff*0.5);
 
           //Trajectory
-           j:=length(trajectory);
-           if (j=0) or (sqrEuklideanNorm(p-trajectory[j-1])>0.01) then begin
-             setLength(trajectory,j+1);
-             trajectory[j]:=p;
-           end;
-           if ((j>10) and (sqrEuklideanNorm(trajectory[0]-p)<sqr(radius))) or (j>2000) then begin
-             for j:=0 to length(trajectory)-2 do trajectory[j]:=trajectory[j+1];
-             setLength(trajectory,length(trajectory)-1);
-           end;
+          j:=length(trajectory);
+          if (j=0) or (sqrEuklideanNorm(p-trajectory[j-1].p)>0.005) then begin
+            setLength(trajectory,j+1);
+            trajectory[j].p:=p;
+            trajectory[j].time:=totalTime;
+          end;
         end;
 
         //Check for star collisions:
         for i:=1 to length(star)-1 do
         for j:=0 to i-1 do
-        if (sqrt(sqr(star[i].p[0]-star[j].p[0])+
+        if not(anyRemoved) and
+           (sqrt(sqr(star[i].p[0]-star[j].p[0])+
                  sqr(star[i].p[1]-star[j].p[1])+
                  sqr(star[i].p[2]-star[j].p[2]))<0.8*(star[i].radius+star[j].radius)) and (star[i].mass>0) and (star[j].mass>0)
         then begin
           pm:=star[i].p*star[i].mass+star[j].p*star[j].mass;
           vm:=star[i].v*star[i].mass+star[j].v*star[j].mass;
+          am:=star[i].a*star[i].mass+star[j].a*star[j].mass;
           star[j].color:=star[i].color*star[i].mass+star[j].color*star[j].mass;
           star[j].mass+=star[i].mass;
           star[j].color*=1/star[j].mass;
           star[j].radius:=power(power(star[j].radius,3)+power(star[i].radius,3),1/3);
           star[j].p:=pm*(1/star[j].mass);
           star[j].v:=vm*(1/star[j].mass);
+          star[j].a:=am*(1/star[j].mass);
           star[i].mass:=-1; //marker
+          anyRemoved:=true;
         end;
-        j:=0;
-        for i:=0 to length(star)-1 do if star[i].mass>0 then begin
-          if i<>j then star[j]:=star[i]; inc(j);
+        if anyRemoved then begin
+          j:=0;
+          for i:=0 to length(star)-1 do if star[i].mass>0 then begin
+            if i<>j then star[j]:=star[i]; inc(j);
+          end;
+          setLength(star,j);
+          anyRemoved:=false;
         end;
-        setLength(star,j);
       end;
     end;
 
@@ -624,7 +806,6 @@ PROCEDURE TParticleEngine.MoveParticles(CONST dt: Tfloat; CONST stressed:boolean
         sqrDtHalf,
         dtHalf:Tfloat;
         aNew:TVector3;
-
         sqrStarRadius,sqrStarMass:array[0..4] of Tfloat;
 
     begin
@@ -654,12 +835,12 @@ PROCEDURE TParticleEngine.MoveParticles(CONST dt: Tfloat; CONST stressed:boolean
 
         if not(flaggedForRemoval) and (removalFactor>random) then begin
           gravitationallyBound:=false;
-          for j:=0 to length(star)-1 do gravitationallyBound:=gravitationallyBound or //(sqrEuklideanNorm(v-star[j].v)*euklideanNorm(p-star[j].p)<2*star[j].mass)
-                                                                                      (sqr(sqrEuklideanNorm(v-star[j].v))* sqrEuklideanNorm(p-star[j].p)<sqrStarMass[j])
+          for j:=0 to length(star)-1 do gravitationallyBound:=gravitationallyBound or (sqr(sqrEuklideanNorm(v-star[j].v))* sqrEuklideanNorm(p-star[j].p)<sqrStarMass[j])
                                                                                    or ((v-star[j].v)*(p-star[j].p)<0);
           if not(gravitationallyBound) then flaggedForRemoval:=true;
         end;
-        if flaggedForRemoval then inc(removalCounter);
+        if flaggedForRemoval
+        then inc(removalCounter)
       end;
       if removalCounter*10>length(dust) then begin //Removing is expensive. Do this only when more than 10% can be removed...
         removalCounter:=0;
@@ -670,6 +851,7 @@ PROCEDURE TParticleEngine.MoveParticles(CONST dt: Tfloat; CONST stressed:boolean
         end;
         setLength(dust,j);
       end;
+
     end;
   VAR t0,t1,t2:qword;
   begin
@@ -698,6 +880,7 @@ CONSTRUCTOR TParticleEngine.create;
     randomize;
     dtFactor:=0;
     cachedSystems.create;
+    initStars(cachedSystems.getPredefinedSystem(0));
   end;
 
 DESTRUCTOR TParticleEngine.destroy;
@@ -755,6 +938,17 @@ PROCEDURE TParticleEngine.initDust(CONST particleCount: longint; starMask: byte;
   VAR systemRadius:Tfloat;
       pointNemo:TVector3;
       vNemo:TVector3;
+      base:array of TMatrix3x3;
+      consensusBase:TMatrix3x3;
+      totalMass:double=0;
+
+  FUNCTION insideAnyStar(CONST p:TVector3; CONST toleranceFactor:double=1):boolean;
+    VAR k:longint;
+    begin
+      result:=false;
+      for k:=0 to length(star)-1 do if sqrEuklideanNorm(p-star[k].p)<sqr(star[k].radius*toleranceFactor) then exit(true);
+    end;
+
   FUNCTION gravitationalSpeed(CONST p:TVector3):TVector3;
     VAR mTot: Tfloat=0;
         m:Tfloat;
@@ -776,30 +970,48 @@ PROCEDURE TParticleEngine.initDust(CONST particleCount: longint; starMask: byte;
     VAR distanceFromStar,speed:Tfloat;
         e0,e1:Tfloat;
     begin
-      distanceFromStar:=star[starIndex].radius*1.5+sqrt(random)*3;
-      speed:=sqrt(star[starIndex].mass)/sqrt(distanceFromStar)*speedFactor;
-      e1:=random*2*pi;
-      e0:=cos(e1);
-      e1:=sin(e1);
-      result.p:=star[starIndex].p+base[starIndex,0]*e0*distanceFromStar+base[starIndex,1]*e1*distanceFromStar;
+      repeat
+        distanceFromStar:=star[starIndex].radius*1.5+sqrt(random)*3;
+        speed:=sqrt(star[starIndex].mass)/sqrt(distanceFromStar)*speedFactor;
+        e1:=random*2*pi;
+        e0:=cos(e1);
+        e1:=sin(e1);
+        result.p:=star[starIndex].p+base[starIndex,0]*e0*distanceFromStar+base[starIndex,1]*e1*distanceFromStar;
+      until not insideAnyStar(result.p,2);
       result.v:=star[starIndex].v+base[starIndex,0]*e1*speed           -base[starIndex,1]*e0*speed;
-      result.flaggedForRemoval:=false;
+    end;
+
+  FUNCTION consensusDiskParticle(CONST speedFactor:Tfloat):TParticle;
+    VAR distanceFromStar,speed:Tfloat;
+        e0,e1:Tfloat;
+    begin
+      repeat
+        distanceFromStar:=systemRadius*sqrt(random);
+        speed:=sqrt(totalMass)/sqrt(distanceFromStar)*speedFactor;
+        e1:=random*2*pi;
+        e0:=cos(e1);
+        e1:=sin(e1);
+        result.p:=consensusBase[0]*e0*distanceFromStar+consensusBase[1]*e1*distanceFromStar;
+      until not insideAnyStar(result.p,2);
+      result.v:=consensusBase[0]*e1*speed           -consensusBase[1]*e0*speed;
     end;
 
   FUNCTION shell(CONST starIndex:longint):TParticle;
     VAR dx,dv:TVector3;
         distanceFromStar,speed:Tfloat;
     begin
-      distanceFromStar:=star[starIndex].radius*1.5;
-      speed:=sqrt(star[starIndex].mass);
-      if speed>distanceFromStar then distanceFromStar:=speed;
+      repeat
+        distanceFromStar:=star[starIndex].radius*1.5;
+        speed:=sqrt(star[starIndex].mass);
+        if speed>distanceFromStar then distanceFromStar:=speed;
 
-      speed:=sqrt(star[starIndex].mass)/sqrt(distanceFromStar);
-      dx:=randomOnSphere*distanceFromStar;
-      //speed is perpendicular to dx
-      dv:=cross(dx,randomOnSphere);
-      dv*=speed/euklideanNorm(dv);
-      result.p:=star[starIndex].p+dx;
+        speed:=sqrt(star[starIndex].mass)/sqrt(distanceFromStar);
+        dx:=randomOnSphere*distanceFromStar;
+        //speed is perpendicular to dx
+        dv:=cross(dx,randomOnSphere);
+        dv*=speed/euklideanNorm(dv);
+        result.p:=star[starIndex].p+dx;
+      until not insideAnyStar(result.p);
       result.v:=star[starIndex].v+dv;
     end;
 
@@ -807,25 +1019,29 @@ PROCEDURE TParticleEngine.initDust(CONST particleCount: longint; starMask: byte;
     VAR dx,dv:TVector3;
         distanceFromStar,speed:Tfloat;
     begin
-      distanceFromStar:=star[starIndex].radius*1.5+sqrt(random)*3;
-      speed:=sqrt(star[starIndex].mass)/sqrt(distanceFromStar);
-      dx:=randomOnSphere*distanceFromStar;
-      dv:=randomInSphere*(2*speed);
-      result.p:=star[starIndex].p+dx;
-      result.v:=star[starIndex].v+dv;
+      repeat
+        distanceFromStar:=star[starIndex].radius*1.5+sqrt(random)*3;
+        speed:=sqrt(star[starIndex].mass)/sqrt(distanceFromStar);
+        dx:=randomOnSphere*distanceFromStar;
+        dv:=randomInSphere*(2*speed);
+        result.p:=star[starIndex].p+dx;
+        result.v:=star[starIndex].v+dv;
+      until not insideAnyStar(result.p);
     end;
 
   FUNCTION ringParticle(CONST starIndex:longint):TParticle;
     VAR distanceFromStar,speed:Tfloat;
         e0,e1:Tfloat;
     begin
-      distanceFromStar:=star[starIndex].radius*1.5+1.5+0.05*random;
-      speed:=sqrt(star[starIndex].mass)/sqrt(distanceFromStar);
-      e1:=random*2*pi;
-      e0:=cos(e1);
-      e1:=sin(e1);
-      result.p:=star[starIndex].p+base[starIndex,0]*e0*distanceFromStar+base[starIndex,1]*e1*distanceFromStar;
-      result.v:=star[starIndex].v+base[starIndex,0]*e1*speed           -base[starIndex,1]*e0*speed;
+      repeat
+        distanceFromStar:=star[starIndex].radius*1.5+1.5+0.05*random;
+        speed:=sqrt(star[starIndex].mass)/sqrt(distanceFromStar);
+        e1:=random*2*pi;
+        e0:=cos(e1);
+        e1:=sin(e1);
+        result.p:=star[starIndex].p+base[starIndex,0]*e0*distanceFromStar+base[starIndex,1]*e1*distanceFromStar;
+        result.v:=star[starIndex].v+base[starIndex,0]*e1*speed           -base[starIndex,1]*e0*speed;
+      until not insideAnyStar(result.p);
     end;
 
   FUNCTION ring3Particle(CONST starIndex:longint):TParticle;
@@ -833,14 +1049,16 @@ PROCEDURE TParticleEngine.initDust(CONST particleCount: longint; starMask: byte;
         e0,e1:Tfloat;
         k:longint;
     begin
-      k:=random(3);
-      distanceFromStar:=star[starIndex].radius*1.5+1.4+0.1*k+0.05*random;
-      speed:=sqrt(star[starIndex].mass)/sqrt(distanceFromStar);
-      e1:=random*2*pi;
-      e0:=cos(e1);
-      e1:=sin(e1);
-      result.p:=star[starIndex].p+base[starIndex,k]*e0*distanceFromStar+base[starIndex,(k+1) mod 3]*e1*distanceFromStar;
-      result.v:=star[starIndex].v+base[starIndex,k]*e1*speed           -base[starIndex,(k+1) mod 3]*e0*speed;
+      repeat
+        k:=random(3);
+        distanceFromStar:=star[starIndex].radius*1.5+1.4+0.1*k+0.05*random;
+        speed:=sqrt(star[starIndex].mass)/sqrt(distanceFromStar);
+        e1:=random*2*pi;
+        e0:=cos(e1);
+        e1:=sin(e1);
+        result.p:=star[starIndex].p+base[starIndex,k]*e0*distanceFromStar+base[starIndex,(k+1) mod 3]*e1*distanceFromStar;
+        result.v:=star[starIndex].v+base[starIndex,k]*e1*speed           -base[starIndex,(k+1) mod 3]*e0*speed;
+      until not insideAnyStar(result.p);
     end;
 
   FUNCTION planetLike(CONST starIndex:longint):TParticle;
@@ -849,49 +1067,42 @@ PROCEDURE TParticleEngine.initDust(CONST particleCount: longint; starMask: byte;
         alpha,beta:Tfloat;
         dv,dp:TVector3;
     begin
-
-      distanceFromStar:=star[starIndex].radius*1.5+1+1E-3*random;
-      speed:=sqrt(star[starIndex].mass)/sqrt(distanceFromStar);
-      alpha:=2*pi/12*(random( 6)+0.01*random+0.495);
-      beta :=2*pi/12*(random(12)+0.01*random+0.495);
-      e0:=cos(alpha)*cos(beta);
-      e1:=sin(alpha)*cos(beta);
-      e2:=           sin(beta);
-      dp:=base[starIndex,0]*e0*distanceFromStar+base[starIndex,1]*e1*distanceFromStar+base[starIndex,2]*e2*distanceFromStar;
-      result.p:=star[starIndex].p+dp;
-      case byte(random(6)) of
-        0: dv:=cross(dp,base[starIndex,0]);
-        1: dv:=cross(dp,base[starIndex,0])*-1;
-        2: dv:=cross(dp,base[starIndex,1])   ;
-        3: dv:=cross(dp,base[starIndex,1])*-1;
-        4: dv:=cross(dp,base[starIndex,2])   ;
-        5: dv:=cross(dp,base[starIndex,2])*-1;
-      end;
-      dv*=speed/euklideanNorm(dv);
-      result.v:=star[starIndex].v+dv;
+      repeat
+        distanceFromStar:=star[starIndex].radius*1.5+1+1E-3*random;
+        speed:=sqrt(star[starIndex].mass)/sqrt(distanceFromStar);
+        alpha:=2*pi/12*(random( 6)+0.01*random+0.495);
+        beta :=2*pi/12*(random(12)+0.01*random+0.495);
+        e0:=cos(alpha)*cos(beta);
+        e1:=sin(alpha)*cos(beta);
+        e2:=           sin(beta);
+        dp:=base[starIndex,0]*e0*distanceFromStar+base[starIndex,1]*e1*distanceFromStar+base[starIndex,2]*e2*distanceFromStar;
+        result.p:=star[starIndex].p+dp;
+        case byte(random(6)) of
+          0: dv:=cross(dp,base[starIndex,0]);
+          1: dv:=cross(dp,base[starIndex,0])*-1;
+          2: dv:=cross(dp,base[starIndex,1])   ;
+          3: dv:=cross(dp,base[starIndex,1])*-1;
+          4: dv:=cross(dp,base[starIndex,2])   ;
+          5: dv:=cross(dp,base[starIndex,2])*-1;
+        end;
+        dv*=speed/euklideanNorm(dv);
+        result.v:=star[starIndex].v+dv;
+      until not insideAnyStar(result.p);
     end;
 
   FUNCTION randomBackgroundParticle:TParticle;
-    VAR i:longint;
-        inStar:boolean=true;
     begin
       repeat
         result.p:=randomInSphere*systemRadius;
-        inStar:=false;
-        for i:=0 to length(star)-1 do inStar:=inStar or (euklideanNorm(result.p-star[i].p)<1.5*star[i].radius);
-      until not inStar;
+      until not insideAnyStar(result.p);
       result.v:=gravitationalSpeed(result.p);
     end;
 
   FUNCTION lonelyCloudParticle:TParticle;
-    VAR i:longint;
-        inStar:boolean=true;
     begin
       repeat
         result.p:=pointNemo+randomInSphere;
-        inStar:=false;
-        for i:=0 to length(star)-1 do inStar:=inStar or (euklideanNorm(result.p-star[i].p)<1.5*star[i].radius);
-      until not inStar;
+      until not insideAnyStar(result.p);
       result.v:=gravitationalSpeed(result.p);
     end;
 
@@ -984,14 +1195,31 @@ PROCEDURE TParticleEngine.initDust(CONST particleCount: longint; starMask: byte;
       result[0]:=v; result[0]*=1/euklideanNorm(result[0]);
       result[2]:=cross(result[0],a); result[2]*=1/euklideanNorm(result[2]);
       result[1]:=cross(result[0],result[2]);
+      result[2]:=cross(result[0],result[1]);
+
+      if isInfinite(result[1,0]) or isNan(result[1,0]) or
+         isInfinite(result[1,1]) or isNan(result[1,1]) or
+         isInfinite(result[1,2]) or isNan(result[1,2]) then result:=randomOrthonormalBasis;
     end;
 
   VAR k:longint;
+      noneSelected:boolean;
   begin
+    noneSelected:=starMask=0;
     vNemo:=ZERO_VECTOR;
     removalCounter:=0;
     setLength(base,length(star));
-    for k:=0 to length(base)-1 do base[k]:=basisOf(star[k].v,star[k].a);
+    consensusBase[2]:=ZERO_VECTOR;
+    for k:=0 to length(base)-1 do begin
+      base[k]:=basisOf(star[k].v,star[k].a);
+      consensusBase[2]+=base[k,2]*star[k].mass;
+      totalMass       +=          star[k].mass;
+    end;
+    consensusBase[2]*=1/totalMass;
+    consensusBase[1]:=cross(consensusBase[2],randomOnSphere);   consensusBase[1]*=1/euklideanNorm(consensusBase[1]);
+    consensusBase[0]:=cross(consensusBase[1],consensusBase[2]); consensusBase[0]*=1/euklideanNorm(consensusBase[0]);
+    consensusBase[2]:=cross(consensusBase[0],consensusBase[1]);
+
     systemRadius:=0;
     for k:=0 to length(star)-1 do systemRadius:=max(systemRadius,euklideanNorm(star[k].p)+1.5*star[k].radius+3);
 
@@ -1002,8 +1230,12 @@ PROCEDURE TParticleEngine.initDust(CONST particleCount: longint; starMask: byte;
 
     setLength(dust,particleCount);
     case mode of
-      dim_stableDisk:         for k:=0 to length(dust)-1 do dust[k]:=diskParticle(starIndex[k],1);
-      dim_stableDiskReversed: for k:=0 to length(dust)-1 do dust[k]:=diskParticle(starIndex[k],-1);
+      dim_stableDisk:         if noneSelected
+                              then for k:=0 to length(dust)-1 do dust[k]:=consensusDiskParticle(    1)
+                              else for k:=0 to length(dust)-1 do dust[k]:=diskParticle(starIndex[k],1);
+      dim_stableDiskReversed: if noneSelected
+                              then for k:=0 to length(dust)-1 do dust[k]:=consensusDiskParticle(    -1)
+                              else for k:=0 to length(dust)-1 do dust[k]:=diskParticle(starIndex[k],-1);
       dim_randomCloud: for k:=0 to length(dust)-1 do dust[k]:=randomParticle(starIndex[k]);
       dim_singleRing : for k:=0 to length(dust)-1 do dust[k]:=ringParticle(starIndex[k]);
       dim_threeRings : for k:=0 to length(dust)-1 do dust[k]:=ring3Particle(starIndex[k]);
@@ -1021,6 +1253,11 @@ PROCEDURE TParticleEngine.initDust(CONST particleCount: longint; starMask: byte;
 PROCEDURE TParticleEngine.initStars(starCount: longint;  CONST target:TsysTarget);
   begin
     initStars(cachedSystems.getSystem(starCount,target));
+  end;
+
+PROCEDURE TParticleEngine.initPresetStars(CONST presetIndex:byte);
+  begin
+    initStars(cachedSystems.getPredefinedSystem(presetIndex));
   end;
 
 PROCEDURE TParticleEngine.initStars(CONST sys: TStarSys);
@@ -1045,6 +1282,11 @@ FUNCTION TParticleEngine.dustCount: longint;
     result:=length(dust)-removalCounter;
   end;
 
+FUNCTION TParticleEngine.starCount:longint;
+  begin
+    result:=length(star);
+  end;
+
 PROCEDURE TParticleEngine.multiplySize(CONST factor:Tfloat);
   VAR i,j:longint;
       vFactor,aFactor:Tfloat;
@@ -1055,7 +1297,7 @@ PROCEDURE TParticleEngine.multiplySize(CONST factor:Tfloat);
       p*=factor;
       v*=vFactor;
       a*=aFactor;
-      for j:=0 to length(trajectory)-1 do trajectory[j]*=factor;
+      for j:=0 to length(trajectory)-1 do trajectory[j].p*=factor;
     end;
     for i:=0 to length(dust)-1 do with dust[i] do begin
       p*=factor;

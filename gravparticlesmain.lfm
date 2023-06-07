@@ -22,12 +22,12 @@ object GravityMainForm: TGravityMainForm
   end
   object Panel1: TPanel
     Left = 0
-    Height = 421
+    Height = 449
     Top = 0
     Width = 236
     AutoSize = True
     BevelOuter = bvNone
-    ClientHeight = 421
+    ClientHeight = 449
     ClientWidth = 236
     TabOrder = 1
     object Panel2: TPanel
@@ -90,7 +90,7 @@ object GravityMainForm: TGravityMainForm
       AnchorSideRight.Control = Panel1
       AnchorSideRight.Side = asrBottom
       Left = 3
-      Height = 103
+      Height = 131
       Top = 53
       Width = 230
       Anchors = [akTop, akLeft, akRight]
@@ -101,7 +101,7 @@ object GravityMainForm: TGravityMainForm
       BevelColor = 8750469
       BevelOuter = bvLowered
       BorderWidth = 1
-      ClientHeight = 103
+      ClientHeight = 131
       ClientWidth = 230
       TabOrder = 1
       OnResize = Panel3Resize
@@ -176,11 +176,11 @@ object GravityMainForm: TGravityMainForm
       end
       object growButton: TButton
         AnchorSideLeft.Control = Panel3
-        AnchorSideTop.Control = initStarsButton
+        AnchorSideTop.Control = initFromPresetButton
         AnchorSideTop.Side = asrBottom
         Left = 5
         Height = 25
-        Top = 73
+        Top = 101
         Width = 75
         BorderSpacing.Left = 3
         BorderSpacing.Top = 3
@@ -191,13 +191,13 @@ object GravityMainForm: TGravityMainForm
         TabOrder = 3
       end
       object shrinkButton: TButton
-        AnchorSideTop.Control = initStarsButton
+        AnchorSideTop.Control = initFromPresetButton
         AnchorSideTop.Side = asrBottom
         AnchorSideRight.Control = Panel3
         AnchorSideRight.Side = asrBottom
         Left = 150
         Height = 25
-        Top = 73
+        Top = 101
         Width = 75
         Anchors = [akTop, akRight]
         BorderSpacing.Left = 3
@@ -241,6 +241,56 @@ object GravityMainForm: TGravityMainForm
         TabOrder = 5
         Text = 'Stable Disks around stars'
       end
+      object initFromPresetButton: TButton
+        AnchorSideLeft.Control = Panel3
+        AnchorSideTop.Control = initStarsButton
+        AnchorSideTop.Side = asrBottom
+        AnchorSideRight.Control = initStarsButton
+        AnchorSideRight.Side = asrBottom
+        Left = 5
+        Height = 25
+        Top = 73
+        Width = 82
+        Anchors = [akTop, akLeft, akRight]
+        BorderSpacing.Left = 3
+        BorderSpacing.Top = 3
+        Caption = 'preset'
+        OnClick = initFromPresetButtonClick
+        TabOrder = 6
+      end
+      object ComboBox3: TComboBox
+        AnchorSideLeft.Control = initStarsButton
+        AnchorSideLeft.Side = asrBottom
+        AnchorSideTop.Control = initFromPresetButton
+        AnchorSideTop.Side = asrCenter
+        AnchorSideRight.Control = Panel3
+        AnchorSideRight.Side = asrBottom
+        Left = 90
+        Height = 23
+        Top = 74
+        Width = 135
+        Anchors = [akTop, akLeft, akRight]
+        BorderSpacing.Left = 3
+        BorderSpacing.Top = 3
+        BorderSpacing.Right = 3
+        Constraints.MinWidth = 120
+        ItemHeight = 15
+        ItemIndex = 0
+        Items.Strings = (
+          'Stable Disks around stars'
+          'Stable Disks around stars (reversed)'
+          'Random Clouds around stars'
+          'Background dust'
+          'Ring'
+          '3 Rings'
+          'Shell'
+          'Planet-Like'
+          'Lonely cloud'
+        )
+        Style = csDropDownList
+        TabOrder = 7
+        Text = 'Stable Disks around stars'
+      end
     end
     object Panel4: TPanel
       AnchorSideLeft.Control = Panel1
@@ -250,7 +300,7 @@ object GravityMainForm: TGravityMainForm
       AnchorSideRight.Side = asrBottom
       Left = 3
       Height = 141
-      Top = 159
+      Top = 187
       Width = 230
       Anchors = [akTop, akLeft, akRight]
       AutoSize = True
@@ -462,7 +512,7 @@ object GravityMainForm: TGravityMainForm
       AnchorSideTop.Side = asrCenter
       Left = 26
       Height = 15
-      Top = 305
+      Top = 333
       Width = 65
       BorderSpacing.Left = 3
       BorderSpacing.Top = 3
@@ -475,7 +525,7 @@ object GravityMainForm: TGravityMainForm
       AnchorSideTop.Side = asrBottom
       Left = 3
       Height = 19
-      Top = 303
+      Top = 331
       Width = 20
       BorderSpacing.Left = 3
       BorderSpacing.Top = 3
@@ -491,7 +541,7 @@ object GravityMainForm: TGravityMainForm
       AnchorSideBottom.Side = asrBottom
       Left = 176
       Height = 15
-      Top = 403
+      Top = 431
       Width = 57
       Anchors = [akTop, akRight]
       BorderSpacing.Top = 3
@@ -507,7 +557,7 @@ object GravityMainForm: TGravityMainForm
       AnchorSideRight.Control = startBgCalc
       Left = 3
       Height = 25
-      Top = 375
+      Top = 403
       Width = 178
       Anchors = [akTop, akLeft, akRight]
       BorderSpacing.Left = 3
@@ -525,7 +575,7 @@ object GravityMainForm: TGravityMainForm
       AnchorSideBottom.Side = asrBottom
       Left = 3
       Height = 15
-      Top = 403
+      Top = 431
       Width = 64
       BorderSpacing.Left = 3
       BorderSpacing.Top = 3
@@ -539,7 +589,7 @@ object GravityMainForm: TGravityMainForm
       AnchorSideRight.Side = asrBottom
       Left = 184
       Height = 25
-      Top = 375
+      Top = 403
       Width = 49
       Anchors = [akTop, akRight]
       AutoSize = True
@@ -556,7 +606,7 @@ object GravityMainForm: TGravityMainForm
       AnchorSideRight.Side = asrBottom
       Left = 3
       Height = 47
-      Top = 325
+      Top = 353
       Width = 230
       Anchors = [akTop, akLeft, akRight]
       AutoSize = True
@@ -583,12 +633,11 @@ object GravityMainForm: TGravityMainForm
         AnchorSideLeft.Control = Panel5
         AnchorSideTop.Control = Label3
         AnchorSideTop.Side = asrBottom
-        AnchorSideRight.Control = Panel5
-        AnchorSideRight.Side = asrBottom
+        AnchorSideRight.Control = SmoothPointsCheckbox
         Left = 5
         Height = 25
         Top = 17
-        Width = 220
+        Width = 156
         Frequency = 10
         Max = 50
         Min = 10
@@ -601,6 +650,37 @@ object GravityMainForm: TGravityMainForm
         BorderSpacing.Right = 3
         BorderSpacing.Bottom = 3
         TabOrder = 0
+      end
+      object SmoothPointsLabel: TLabel
+        AnchorSideLeft.Control = SmoothPointsCheckbox
+        AnchorSideLeft.Side = asrBottom
+        AnchorSideTop.Control = PointSizeTrackBar
+        AnchorSideTop.Side = asrCenter
+        AnchorSideRight.Control = Panel5
+        AnchorSideRight.Side = asrBottom
+        Left = 184
+        Height = 15
+        Top = 22
+        Width = 41
+        Anchors = [akTop, akRight]
+        BorderSpacing.Top = 3
+        BorderSpacing.Right = 3
+        Caption = 'smooth'
+        ParentColor = False
+      end
+      object SmoothPointsCheckbox: TCheckBox
+        AnchorSideTop.Control = PointSizeTrackBar
+        AnchorSideTop.Side = asrCenter
+        AnchorSideRight.Control = SmoothPointsLabel
+        Left = 164
+        Height = 19
+        Top = 20
+        Width = 20
+        Anchors = [akTop, akRight]
+        BorderSpacing.Left = 3
+        BorderSpacing.Top = 3
+        OnChange = SmoothPointsCheckboxChange
+        TabOrder = 1
       end
     end
   end

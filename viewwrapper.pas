@@ -7,7 +7,7 @@ INTERFACE
 USES
   Classes, sysutils,
   particlePhysics,vectors,
-  GL,OpenGLContext,
+  GL,OpenGLContext,GLext,
   Controls;
 
 TYPE
@@ -21,12 +21,12 @@ TYPE
       lighting:record
         ambient,
         diffuse,
-        specular,
         position: array [0..3] of GLfloat;
       end;
       geometry:record
         ParticleList: GLuint;
         pointSize:double;
+        smoothPoints:boolean;
       end;
       rotation:record
         rx,ry: single;
@@ -61,8 +61,6 @@ TYPE
       PROCEDURE setLight1Brightness(CONST value:TGLfloat);
       FUNCTION getLight2Brightness:TGLfloat;
       PROCEDURE setLight2Brightness(CONST value:TGLfloat);
-      FUNCTION getLight3Brightness:TGLfloat;
-      PROCEDURE setLight3Brightness(CONST value:TGLfloat);
     public
       //Physics time
       ParticleEngine: TParticleEngine;
@@ -73,13 +71,12 @@ TYPE
       PROPERTY getFps:double read frameRateControl.measuredFps;
       PROPERTY light1Brightness:TGLfloat read getLight1Brightness write setLight1Brightness;
       PROPERTY light2Brightness:TGLfloat read getLight2Brightness write setLight2Brightness;
-      PROPERTY light3Brightness:TGLfloat read getLight3Brightness write setLight3Brightness;
       PROPERTY pointSize:double read geometry.pointSize write geometry.pointSize;
 
       PROPERTY lockXRotation: boolean read rotation.lockX write rotation.lockX;
       PROPERTY dustRecommendation: double read frameRateControl.dustRecommendation;
       FUNCTION getSerialVersion:dword; virtual;
-
+      PROPERTY smoothPoints:boolean read geometry.smoothPoints write geometry.smoothPoints;
       DESTRUCTOR destroy;
   end;
 
@@ -89,12 +86,14 @@ CONSTRUCTOR T_viewState.create(control: TOpenGLControl);
   begin
     OpenGLControl:=control;
     OpenGLControl.DoubleBuffered:=true;
+
     ParticleEngine:=TParticleEngine.create;
-    ParticleEngine.initStars(2,none);
     ParticleEngine.initDust(0,255,dim_stableDisk);
     ParticleEngine.dtFactor:=0;
+    if wglSwapIntervalEXT<>nil then wglSwapIntervalEXT(40);
 
     geometry.pointSize:=1;
+    geometry.smoothPoints:=false;
     rotation.distance:=20;
 
     with mouse do begin
@@ -122,11 +121,6 @@ CONSTRUCTOR T_viewState.create(control: TOpenGLControl);
       diffuse[1]:=0.1;
       diffuse[2]:=0.1;
       diffuse[3]:=0.0;
-      {diffuse color}
-      specular[0]:=0;
-      specular[1]:=0;
-      specular[2]:=0;
-      specular[3]:=0.0;
     end;
 
     setTargetFPS(40);
@@ -254,7 +248,6 @@ PROCEDURE T_viewState.viewPaint(Sender: TObject);
         position[3]:=0.0;
         glLightfv(GL_LIGHT0,GL_AMBIENT ,ambient);
         glLightfv(GL_LIGHT0,GL_DIFFUSE ,diffuse);
-        glLightfv(GL_LIGHT0,GL_SPECULAR,specular);
         glEnable (GL_LIGHT0);
 
         glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE);
@@ -317,11 +310,18 @@ PROCEDURE T_viewState.viewPaint(Sender: TObject);
         LastFrameTicks-=1000;
         frameCount:=0;
       end;
+
+      if tickDelta=0 then tickDelta:=round(1E3/measuredFps);
       ParticleEngine.update(tickDelta,measuredFps<TARGET_FPS);
     end;
 
     if OpenGLControl.MakeCurrent then begin
       if not AreaInitialized then initializeArea;
+
+      if smoothPoints then begin
+        glEnable(GL_POINT_SMOOTH);
+        glHint(GL_POINT_SMOOTH_HINT, GL_NICEST);
+      end else glDisable(GL_POINT_SMOOTH);
 
       //Update rotation angles
       if (mouse.isDown<>leftDown) then with rotation do begin
@@ -345,11 +345,13 @@ PROCEDURE T_viewState.viewPaint(Sender: TObject);
       else ay*=OpenGLControl.width/OpenGLControl.height;
       glTranslatef(0,0,-rotation.distance);
       glScalef(ax,ay,az);
+
+      glLightfv(GL_LIGHT0,GL_POSITION,lighting.position);
       //Rotate
       glRotatef(rotation.rx,1.0,0.0,0.0);
       glRotatef(rotation.ry,0.0,1.0,0.0);
       //Draw
-      glLightfv(GL_LIGHT0,GL_POSITION,lighting.position);
+
       glColorMaterial(GL_FRONT,GL_AMBIENT_AND_DIFFUSE);
       ParticleEngine.DrawParticles(geometry.ParticleList,geometry.pointSize);
       glPopMatrix;
@@ -394,21 +396,6 @@ PROCEDURE T_viewState.setLight2Brightness(CONST value: TGLfloat);
       diffuse[0]:=value;
       diffuse[1]:=value;
       diffuse[2]:=value;
-    end;
-    AreaInitialized:=false;
-  end;
-
-FUNCTION T_viewState.getLight3Brightness: TGLfloat;
-  begin
-    result:=lighting.specular[0];
-  end;
-
-PROCEDURE T_viewState.setLight3Brightness(CONST value: TGLfloat);
-  begin
-    with lighting do begin
-      specular[0]:=value;
-      specular[1]:=value;
-      specular[2]:=value;
     end;
     AreaInitialized:=false;
   end;
