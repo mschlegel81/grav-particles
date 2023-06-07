@@ -459,14 +459,11 @@ PROCEDURE TCachedSystems.prepareSystem(CONST starCount: longint; CONST targetQua
       v-=velCenter;
     end;
 
-    //Maximize mass with a probability of 1/3
-    if random<1/3 then begin
-      maxMass:=10/maxMass;
-      for i:=0 to length(newSystem.stars)-1 do begin
-        multiplyStarMass(newSystem.stars[i],maxMass);
-        maxRadius:=max(maxRadius,newSystem.stars[i].radius);
-        for j:=0 to i-1 do minDistance:=min(minDistance,euklideanNorm(newSystem.stars[i].p-newSystem.stars[j].p));
-      end;
+    maxMass:=10/maxMass;
+    for i:=0 to length(newSystem.stars)-1 do begin
+      multiplyStarMass(newSystem.stars[i],maxMass);
+      maxRadius:=max(maxRadius,newSystem.stars[i].radius);
+      for j:=0 to i-1 do minDistance:=min(minDistance,euklideanNorm(newSystem.stars[i].p-newSystem.stars[j].p));
     end;
     //Move stars closer together with a probability of 1/2
     if random<1/2 then begin
@@ -652,8 +649,8 @@ FUNCTION TCachedSystems.getPredefinedSystem(CONST index:byte):TStarSys;
     case index of
       0: result:=planar2BodyOf(0.1,10,pi);
       1: result:=planar3BodyOf(-0.97000436, 0.24308753,0,0,0.97000436,-0.24308753, 0.4662036850, 0.4323657300,-0.93240737, -0.86473146,0.4662036850, 0.4323657300);
-      2: result:=planar2BodyOf(1,1,0.5);
-      3: result:=planar2BodyOf(1,1,1/3);
+      2: result:=planar2BodyOf(10,10,0.5*sqrt(10));
+      3: result:=planar2BodyOf(10,10,1/3*sqrt(10));
     end;
     lastResponse:=result;
   end;

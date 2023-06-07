@@ -6,3 +6,4 @@
 /backup/*
 *.lps
 /gravityMain.res
+*.cached_sys.txt
