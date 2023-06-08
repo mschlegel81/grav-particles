@@ -66,6 +66,7 @@ TYPE
     PROCEDURE startBackgroundCalculation;
     FUNCTION predefinedSystemCount:longint;
     FUNCTION getPredefinedSystem(CONST index:byte):TStarSys;
+    FUNCTION predefinedSystemName(CONST index:byte):string;
   end;
 
   TDustInitMode = (dim_stableDisk,
@@ -100,8 +101,7 @@ TYPE
     PROCEDURE MoveParticles(CONST dt:Tfloat; CONST stressed:boolean);
   public
     cachedSystems:TCachedSystems;
-    totalTime:Tfloat;
-    dtFactor:Tfloat;
+    totalTime,dtFactor,trajectoryMaxTime:Tfloat;
 
     CONSTRUCTOR create;
     DESTRUCTOR destroy; override;
@@ -123,11 +123,10 @@ IMPLEMENTATION
 USES math,sysutils,LCLProc;
 CONST maxTimeStep=1E-3;
       maxDustTimeStep=1E-1;
-      trajectoryMaxTime=50;
 
 FUNCTION dtOf(CONST aSqrMax:double):double;
   begin
-    result:=sqrt(1E-6/sqrt(aSqrMax));
+    result:=sqrt(1E-8/sqrt(aSqrMax));
     if result>maxTimeStep then result:=maxTimeStep;
   end;
 
@@ -375,7 +374,7 @@ PROCEDURE TCachedSystems.prepareSystem(CONST starCount: longint; CONST targetQua
             aNew[i]+=accel*stars[j].mass;
             aNew[j]-=accel*stars[i].mass;
             //Collision
-            if euklideanNorm(p[i]-p[j])<(stars[i].radius+stars[j].radius) then begin
+            if sqrEuklideanNorm(p[i]-p[j])<sqr(0.8*(stars[i].radius+stars[j].radius)) then begin
               endType:=ENDED_BY_COLLISION;
               finalize;
               exit;
@@ -589,11 +588,6 @@ PROCEDURE TCachedSystems.startBackgroundCalculation;
     beginThread(@makeSystemsInBackground,@self);
   end;
 
-FUNCTION TCachedSystems.predefinedSystemCount:longint;
-  begin
-    result:=4;
-  end;
-
 FUNCTION TCachedSystems.getPredefinedSystem(CONST index:byte):TStarSys;
   FUNCTION planar3BodyOf(CONST x0,y0,x1,y1,x2,y2,vx0,vy0,vx1,vy1,vx2,vy2:double):TStarSys;
     begin
@@ -627,6 +621,14 @@ FUNCTION TCachedSystems.getPredefinedSystem(CONST index:byte):TStarSys;
                                  vx,vy,-2*vx,-2*vy);
     end;
 
+  PROCEDURE addBody(CONST p_,v_,color_:TVector3; CONST mass_,radius_:double);
+    begin
+      setLength(result.stars,length(result.stars)+1);
+      with result.stars[length(result.stars)-1] do begin
+        p:=p_; v:=v_; a:=ZERO_VECTOR; mass:=mass_; radius:=radius_; color:=color_;
+      end;
+    end;
+
   FUNCTION planar2BodyOf(CONST m0,m1,v:double):TStarSys;
     begin
       setLength(result.stars,2);
@@ -646,13 +648,85 @@ FUNCTION TCachedSystems.getPredefinedSystem(CONST index:byte):TStarSys;
     end;
 
   begin
+    setLength(result.stars,0);
+    //[0,0,1,0,-1,0,0.0,0.0,0.0,1.118,0.0,-1.118]
     case index of
-      0: result:=planar2BodyOf(0.1,10,pi);
+      0: begin
+           result:=planar2BodyOf(0.1,10,pi);
+           result.stars[0].radius:=0.05;
+           result.stars[1].radius:=1/3;
+         end;
       1: result:=planar3BodyOf(-0.97000436, 0.24308753,0,0,0.97000436,-0.24308753, 0.4662036850, 0.4323657300,-0.93240737, -0.86473146,0.4662036850, 0.4323657300);
       2: result:=planar2BodyOf(10,10,0.5*sqrt(10));
       3: result:=planar2BodyOf(10,10,1/3*sqrt(10));
+      4: begin
+           addBody(vectorOf( sin(0*pi/3),cos(0*pi/3),0),
+                   vectorOf(-cos(0*pi/3),sin(0*pi/3),0)*0.7598356856515924 ,
+                   vectorOf(1,0,0),1,0.1);
+           addBody(vectorOf( sin(2*pi/3),cos(2*pi/3),0),
+                   vectorOf(-cos(2*pi/3),sin(2*pi/3),0)*0.7598356856515924 ,
+                   vectorOf(0,1,0),1,0.1);
+           addBody(vectorOf( sin(4*pi/3),cos(4*pi/3),0),
+                   vectorOf(-cos(4*pi/3),sin(4*pi/3),0)*0.7598356856515924 ,
+                   vectorOf(0,0,1),1,0.1);
+         end;
+      5: begin
+           addBody(vectorOf( sin(0*pi/4),cos(0*pi/4),0),
+                   vectorOf(-cos(0*pi/4),sin(0*pi/4),0)*0.97831834347851587 ,
+                   vectorOf(1,0,0),1,0.1);
+           addBody(vectorOf( sin(2*pi/4),cos(2*pi/4),0),
+                   vectorOf(-cos(2*pi/4),sin(2*pi/4),0)*0.97831834347851587 ,
+                   vectorOf(0,1,0),1,0.1);
+           addBody(vectorOf( sin(4*pi/4),cos(4*pi/4),0),
+                   vectorOf(-cos(4*pi/4),sin(4*pi/4),0)*0.97831834347851587 ,
+                   vectorOf(0,0,1),1,0.1);
+           addBody(vectorOf( sin(6*pi/4),cos(6*pi/4),0),
+                   vectorOf(-cos(6*pi/4),sin(6*pi/4),0)*0.97831834347851587 ,
+                   vectorOf(1,1,0),1,0.1);
+         end;
+      6: begin
+           addBody(vectorOf( sin(0*pi/5),cos(0*pi/5),0),
+                   vectorOf(-cos(0*pi/5),sin(0*pi/5),0)*1.173193044844357 ,
+                   vectorOf(1,0,0),1,0.1);
+           addBody(vectorOf( sin(2*pi/5),cos(2*pi/5),0),
+                   vectorOf(-cos(2*pi/5),sin(2*pi/5),0)*1.173193044844357 ,
+                   vectorOf(0,1,0),1,0.1);
+           addBody(vectorOf( sin(4*pi/5),cos(4*pi/5),0),
+                   vectorOf(-cos(4*pi/5),sin(4*pi/5),0)*1.173193044844357 ,
+                   vectorOf(0,0,1),1,0.1);
+           addBody(vectorOf( sin(6*pi/5),cos(6*pi/5),0),
+                   vectorOf(-cos(6*pi/5),sin(6*pi/5),0)*1.173193044844357 ,
+                   vectorOf(1,1,0),1,0.1);
+           addBody(vectorOf( sin(8*pi/5),cos(8*pi/5),0),
+                   vectorOf(-cos(8*pi/5),sin(8*pi/5),0)*1.173193044844357,
+                   vectorOf(0.5,0.5,0.5),1,0.1);
+         end;
+      7: result:=planar3BodyOf(0,0,1,0,-1,0,0.0,0.0,0.0,1.118,0.0,-1.118);
+      8: result:=planar3BodyOf(0.3361300950,0,0.7699893804,0,-1.1061194753,0,0,1.5324315370,0,-0.6287350978,0,-0.9036964391);
+      9: result:=planar3BodyOf(-0.3362325077,0,1.3136838813,0,-0.9774513736,0,0,1.2659472954,0,-0.0329092795,0,-1.2330380159);
     end;
     lastResponse:=result;
+  end;
+
+FUNCTION TCachedSystems.predefinedSystemName(CONST index:byte):string;
+  begin
+    case index of
+      0: result:='Star and planet';
+      1: result:='Infinity loop';
+      2: result:='Two masses on circle';
+      3: result:='Two masses on ellipses';
+      4: result:='Equilateral triangle';
+      5: result:='Square';
+      6: result:='Equilateral pentagon';
+      7: result:='Three masses on a line';
+      8: result:='Broucke A 2';
+      9: result:='Henon 26';
+    end;
+  end;
+
+FUNCTION TCachedSystems.predefinedSystemCount:longint;
+  begin
+    result:=10;
   end;
 
 FUNCTION TStarSys.loadFromStream(VAR stream: T_bufferedInputStreamWrapper): boolean;
@@ -768,9 +842,9 @@ PROCEDURE TParticleEngine.MoveParticles(CONST dt: Tfloat; CONST stressed:boolean
         for i:=1 to length(star)-1 do
         for j:=0 to i-1 do
         if not(anyRemoved) and
-           (sqrt(sqr(star[i].p[0]-star[j].p[0])+
-                 sqr(star[i].p[1]-star[j].p[1])+
-                 sqr(star[i].p[2]-star[j].p[2]))<0.8*(star[i].radius+star[j].radius)) and (star[i].mass>0) and (star[j].mass>0)
+           (sqr(star[i].p[0]-star[j].p[0])+
+            sqr(star[i].p[1]-star[j].p[1])+
+            sqr(star[i].p[2]-star[j].p[2])<sqr(0.8*(star[i].radius+star[j].radius)))
         then begin
           pm:=star[i].p*star[i].mass+star[j].p*star[j].mass;
           vm:=star[i].v*star[i].mass+star[j].v*star[j].mass;
@@ -809,7 +883,6 @@ PROCEDURE TParticleEngine.MoveParticles(CONST dt: Tfloat; CONST stressed:boolean
       for i:=0 to length(star)-1 do begin
         sqrStarRadius[i]:=sqr(star[i].radius);
         sqrStarMass  [i]:=4*sqr(star[i].mass);
-
       end;
 
       dtHalf:=dt*0.5;
@@ -862,9 +935,9 @@ PROCEDURE TParticleEngine.MoveParticles(CONST dt: Tfloat; CONST stressed:boolean
     inc(sampleCount);
     starTicks+=(t1-t0);
     dustTicks+=(t2-t1);
-    if (starTicks+dustTicks)>10000
+    if ((starTicks+dustTicks)>10000) or (GetTickCount64-startOfSampling>30000)
     then begin
-      writeln('Movement cost: stars ',starTicks,' dust ',dustTicks,'; fraction or total: ',starTicks/(GetTickCount64-startOfSampling)*100:0:3,'% / ',dustTicks/(GetTickCount64-startOfSampling)*100:0:3,'%; per step: ',starTicks/sampleCount:0:3,' / ',dustTicks/sampleCount:0:3);
+      writeln('Movement cost: stars ',starTicks,' dust ',dustTicks,'; fraction of total: ',starTicks/(GetTickCount64-startOfSampling)*100:0:3,'% / ',dustTicks/(GetTickCount64-startOfSampling)*100:0:3,'%; per step: ',starTicks/sampleCount:0:3,' / ',dustTicks/sampleCount:0:3);
       starTicks:=0;
       dustTicks:=0;
       sampleCount:=0;
@@ -878,6 +951,7 @@ CONSTRUCTOR TParticleEngine.create;
     dtFactor:=0;
     cachedSystems.create;
     initStars(cachedSystems.getPredefinedSystem(0));
+    trajectoryMaxTime:=16;
   end;
 
 DESTRUCTOR TParticleEngine.destroy;
@@ -902,6 +976,7 @@ PROCEDURE TParticleEngine.DrawParticles(CONST ParticleList: GLuint; CONST pointS
   VAR i: integer;
       x: TVector3;
       j: longint;
+
   begin
     for i:=0 to length(star)-1 do begin
       glColor3d(star[i].color[0],star[i].color[1],star[i].color[2]);
@@ -910,21 +985,55 @@ PROCEDURE TParticleEngine.DrawParticles(CONST ParticleList: GLuint; CONST pointS
       glScaled(star[i].radius,star[i].radius,star[i].radius);
       glCallList(ParticleList);
       glPopMatrix;
+
       glBegin(GL_LINE_STRIP);
       for j:=0 to length(star[i].trajectory)-1 do begin
         x:=star[i].color*(j/length(star[i].trajectory));
         glColor3d(x[0],x[1],x[2]);
         glVertex3dv(@star[i].trajectory[j]);
-//        glVertex3fv(@star[i].trajectory[j]);
       end;
       glEnd();
     end;
     glPointSize(pointSize);
+    //glEnableClientState(GL_VERTEX_ARRAY);
+    //glEnableClientState(GL_COLOR_ARRAY);
+    //glVertexPointer(3, GL_DOUBLE, 0, @VertexBuffer[0]);
+    //glColorPointer(3, GL_DOUBLE, 0, @ColorBuffer[0]);
+    //
+    //for i:=0 to length(Star)-1 do begin
+    //  j:=0;
+    //  for k:=0 to length(star[i].trajectory)-1 do begin
+    //    colorBuffer [j]:=star[i].color*(k/length(star[i].trajectory));
+    //    vertexBuffer[j]:=star[i].trajectory[k].p;
+    //    inc(j);
+    //    if j>length(colorBuffer) then begin glDrawArrays(GL_LINE_STRIP,0,j); j:=0; end;
+    //  end;
+    //  if j>0 then begin glDrawArrays(GL_LINE_STRIP,0,j); j:=0; end;
+    //
+    //end;
+    //
+    //
+    //
+    //j:=0;
+    //for i:=0 to length(dust)-1 do if not(dust[i].flaggedForRemoval) then begin
+    //  colorBuffer[j,0]:=0.2+0.5*i/(length(dust)-1);
+    //  colorBuffer[j,1]:=colorBuffer[j,0];
+    //  colorBuffer[j,2]:=colorBuffer[j,0];
+    //  vertexBuffer[j]:=dust[i].p;
+    //  inc(j);
+    //  if j>length(colorBuffer) then begin glDrawArrays(GL_POINTS,0,j); j:=0; end;
+    //end;
+    //if j>0 then begin
+    //  glDrawArrays(GL_POINTS,0,j);
+    //  j:=0;
+    //end;
+    //glDisableClientState(GL_VERTEX_ARRAY);
+    //glDisableClientState(GL_COLOR_ARRAY);
+
     glBegin(GL_POINTS);
     for i:=0 to length(dust)-1 do if not(dust[i].flaggedForRemoval) then begin
       x[0]:=0.2+0.5*i/(length(dust)-1);
       glColor3d(x[0],x[0],x[0]);
-//      glVertex3fv(@dust[i].p);
       glVertex3dv(@dust[i].p);
     end;
     glEnd();
@@ -979,18 +1088,26 @@ PROCEDURE TParticleEngine.initDust(CONST particleCount: longint; starMask: byte;
     end;
 
   FUNCTION consensusDiskParticle(CONST speedFactor:Tfloat):TParticle;
-    VAR distanceFromStar,speed:Tfloat;
+    VAR distanceFromOrigin:Tfloat;
         e0,e1:Tfloat;
+        temp:TVector3;
+        k:longint;
     begin
       repeat
-        distanceFromStar:=systemRadius*sqrt(random);
-        speed:=sqrt(totalMass)/sqrt(distanceFromStar)*speedFactor;
+        distanceFromOrigin:=systemRadius*sqrt(random);
         e1:=random*2*pi;
         e0:=cos(e1);
         e1:=sin(e1);
-        result.p:=consensusBase[0]*e0*distanceFromStar+consensusBase[1]*e1*distanceFromStar;
+        result.p:=consensusBase[0]*e0*distanceFromOrigin+consensusBase[1]*e1*distanceFromOrigin;
       until not insideAnyStar(result.p,2);
-      result.v:=consensusBase[0]*e1*speed           -consensusBase[1]*e0*speed;
+      result.a:=ZERO_VECTOR;
+      for k:=0 to length(star)-1 do begin
+        temp:=result.p-star[k].p;
+        temp*=(star[k].mass/sqrEuklideanNorm(temp));
+        result.a+=temp;
+      end;
+      result.a*=1/sqrt(euklideanNorm(result.a));
+      result.v:=cross(result.a,consensusBase[2])*speedFactor;
     end;
 
   FUNCTION shell(CONST starIndex:longint):TParticle;
@@ -1187,7 +1304,7 @@ PROCEDURE TParticleEngine.initDust(CONST particleCount: longint; starMask: byte;
       end;
     end;
 
-  FUNCTION basisOf(CONST v,a:TVector3):TMatrix3x3;
+  FUNCTION basisOf(CONST v,a:TVector3; OUT fallback:boolean):TMatrix3x3;
     begin
       result[0]:=v; result[0]*=1/euklideanNorm(result[0]);
       result[2]:=cross(result[0],a); result[2]*=1/euklideanNorm(result[2]);
@@ -1196,26 +1313,34 @@ PROCEDURE TParticleEngine.initDust(CONST particleCount: longint; starMask: byte;
 
       if isInfinite(result[1,0]) or isNan(result[1,0]) or
          isInfinite(result[1,1]) or isNan(result[1,1]) or
-         isInfinite(result[1,2]) or isNan(result[1,2]) then result:=randomOrthonormalBasis;
+         isInfinite(result[1,2]) or isNan(result[1,2]) then begin
+        result:=randomOrthonormalBasis;
+        fallback:=true;
+      end else fallback:=false;
     end;
 
   VAR k:longint;
       noneSelected:boolean;
+      fallback:boolean;
   begin
-    noneSelected:=starMask=0;
+    noneSelected:=starMask and ((1 shl length(star))-1) =0;
     vNemo:=ZERO_VECTOR;
     removalCounter:=0;
     setLength(base,length(star));
     consensusBase[2]:=ZERO_VECTOR;
     for k:=0 to length(base)-1 do begin
-      base[k]:=basisOf(star[k].v,star[k].a);
-      consensusBase[2]+=base[k,2]*star[k].mass;
-      totalMass       +=          star[k].mass;
+      base[k]:=basisOf(star[k].v,star[k].a,fallback);
+      if not(fallback) then begin
+        consensusBase[2]+=base[k,2]*star[k].mass;
+        totalMass       +=          star[k].mass;
+      end;
     end;
-    consensusBase[2]*=1/totalMass;
-    consensusBase[1]:=cross(consensusBase[2],randomOnSphere);   consensusBase[1]*=1/euklideanNorm(consensusBase[1]);
-    consensusBase[0]:=cross(consensusBase[1],consensusBase[2]); consensusBase[0]*=1/euklideanNorm(consensusBase[0]);
-    consensusBase[2]:=cross(consensusBase[0],consensusBase[1]);
+    if totalMass>0 then begin
+      consensusBase[2]*=1/totalMass;
+      consensusBase[1]:=cross(consensusBase[2],randomOnSphere);   consensusBase[1]*=1/euklideanNorm(consensusBase[1]);
+      consensusBase[0]:=cross(consensusBase[1],consensusBase[2]); consensusBase[0]*=1/euklideanNorm(consensusBase[0]);
+      consensusBase[2]:=cross(consensusBase[0],consensusBase[1]);
+    end else consensusBase:=randomOrthonormalBasis;
 
     systemRadius:=0;
     for k:=0 to length(star)-1 do systemRadius:=max(systemRadius,euklideanNorm(star[k].p)+1.5*star[k].radius+3);

@@ -112,9 +112,9 @@ CONSTRUCTOR T_viewState.create(control: TOpenGLControl);
 
     with lighting do begin
       {ambient color}
-      ambient[0]:=0.9;
-      ambient[1]:=0.9;
-      ambient[2]:=0.9;
+      ambient[0]:=0.7;
+      ambient[1]:=0.7;
+      ambient[2]:=0.7;
       ambient[3]:=0.0;
       {diffuse color}
       diffuse[0]:=0.1;
@@ -240,7 +240,7 @@ PROCEDURE T_viewState.viewPaint(Sender: TObject);
       frameRateControl.LastFrameTicks:=0;
       frameRateControl.dustRecommendation:=100000;
       {diffuse position}
-      n:=vectorOf(1,2,0); n*=1/euklideanNorm(n);
+      n:=vectorOf(0,1,0); n*=1/euklideanNorm(n);
       with lighting do begin
         position[0]:=n[0];
         position[1]:=n[1];
@@ -319,13 +319,15 @@ PROCEDURE T_viewState.viewPaint(Sender: TObject);
       if not AreaInitialized then initializeArea;
 
       if smoothPoints then begin
-        glEnable(GL_POINT_SMOOTH);
-        glHint(GL_POINT_SMOOTH_HINT, GL_NICEST);
-        glEnable(GL_LINE_SMOOTH);
-        glHint(GL_LINE_SMOOTH_HINT,GL_NICEST);
+        glEnable(  GL_POINT_SMOOTH); glHint(  GL_POINT_SMOOTH_HINT,GL_NICEST);
+        glEnable(   GL_LINE_SMOOTH); glHint(   GL_LINE_SMOOTH_HINT,GL_NICEST);
+        glEnable(GL_POLYGON_SMOOTH); glHint(GL_POLYGON_SMOOTH_HINT,GL_NICEST);
+        glLineWidth(2);
       end else begin
-        glDisable(GL_POINT_SMOOTH);
-        glDisable(GL_LINE_SMOOTH);
+        glDisable(  GL_POINT_SMOOTH);
+        glDisable(   GL_LINE_SMOOTH);
+        glDisable(GL_POLYGON_SMOOTH);
+        glLineWidth(1);
       end;
 
       //Update rotation angles
@@ -341,7 +343,7 @@ PROCEDURE T_viewState.viewPaint(Sender: TObject);
         if rx<-180 then rx+=360;
       end;
 
-      glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT);
+      glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT or GL_STENCIL_BUFFER_BIT);
       glLoadIdentity;
       glPushMatrix;
       //Scale to preserve aspect ratio
@@ -360,7 +362,6 @@ PROCEDURE T_viewState.viewPaint(Sender: TObject);
       glColorMaterial(GL_FRONT,GL_AMBIENT_AND_DIFFUSE);
       ParticleEngine.DrawParticles(geometry.ParticleList,geometry.pointSize);
       glPopMatrix;
-
       OpenGLControl.SwapBuffers;
     end;
   end;

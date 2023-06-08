@@ -5,6 +5,36 @@ STARS:='stars';
 SIZE:='size';
 
 
+USE linAlg;
+
+
+makeBase(v1,v2)->begin
+  local a:=v1/euklideanNorm(v1);
+  local c:=crossProd(v1,v2); c/=euklideanNorm(c);
+  local b:=crossProd(c,a);
+  [a,b,c].toSquareMatrix.invert;
+end;
+
+zeroOut(x)->vectorIfThenElse(abs(x)<1E-10,0,x);
+
+transformStar(star:Map,transform:SquareMatrix)->begin
+  ['mass'=>star['mass'],
+   'p'   =>flatten([star['p']].toMatrix*transform).zeroOut,
+   'v'   =>flatten([star['v']].toMatrix*transform).zeroOut];
+end;
+
+
+canonicalSystem(stars:List)->
+  stars.size=1 ? stars :
+  stars.size=2 ? begin
+    local B:=makeBase(stars[1,'p']-stars[0,'p'],
+                      stars[1,'v']-stars[0,'v']);
+    stars.map((s)->transformStar(s,B));
+  end : begin
+    local B:=makeBase(stars[1,'p']-stars[0,'p'],
+                      stars[2,'p']-stars[0,'p']);
+    stars.map((s)->transformStar(s,B));
+  end;
 
 
 parseSystem(line:String)->begin
@@ -14,7 +44,7 @@ parseSystem(line:String)->begin
 
   [QUALITY=>qualityMeasure,
    SIZE=>stars.size,
-   STARS=>stars.sort((s)->-s['mass'])].toMap;
+   STARS=>stars.sort((s)->-s['mass']).canonicalSystem].toMap;
 end;
 
 memoized allSystems->fileLines('gravity.cached_sys.txt').pMap(::parseSystem).toList;
@@ -24,11 +54,6 @@ massRatio(sys:Map)->begin
   masses.tail/masses.head;
 end;
 
-//kineticEnergy(sys:Map)->sys['stars'].each(star,star['mass']*euklideanNorm(star['v'])²,+);
-//
-//allSystems.filter((s)->s['size']=3).map(::kineticEnergy).toList.plot;
-//allSystems.filter((s)->s['size']=2).map(::kineticEnergy).toList.addPlot;
-//allSystems.filter((s)->s['size']=4).map(::kineticEnergy).toList.addPlot;
 
 qualityHistograms->begin
   local Q:=allSystems.map((s)->[s[SIZE],s[QUALITY]]);
@@ -39,3 +64,5 @@ qualityHistograms->begin
 end;
 
 qualityHistograms;
+
+allSystems.filter((s)->s['size']=3);

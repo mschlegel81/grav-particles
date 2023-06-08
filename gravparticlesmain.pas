@@ -14,11 +14,16 @@ TYPE
 
   TGravityMainForm = class(TForm)
     AutoRotateCheckbox: TCheckBox;
+    BGTabSheet: TTabSheet;
+    TrailLengthLabel: TLabel;
+    PageControl1: TPageControl;
+    Panel6: TPanel;
+    TrailLengthTrackBar: TTrackBar;
+    SimulationTabSheet: TTabSheet;
     SmoothPointsCheckbox: TCheckBox;
     SmoothPointsLabel: TLabel;
     ComboBox3: TComboBox;
     initFromPresetButton: TButton;
-    ComboBox2: TComboBox;
     shrinkButton: TButton;
     growButton: TButton;
     Label3: TLabel;
@@ -26,6 +31,8 @@ TYPE
     PointSizeTrackBar: TTrackBar;
     startBgCalc: TButton;
     SetRecommendedDustButton: TButton;
+    TabSheet1: TTabSheet;
+    TabSheet2: TTabSheet;
     TIME_LABEL: TLabel;
     stopCalcButton: TButton;
     resetStarsButton: TButton;
@@ -36,7 +43,6 @@ TYPE
     CheckBox4: TCheckBox;
     CheckBox5: TCheckBox;
     ComboBox1: TComboBox;
-    initStarsButton: TButton;
     Label1: TLabel;
     Label2: TLabel;
     AutoRotateLabel: TLabel;
@@ -52,6 +58,7 @@ TYPE
     dustLabel: TLabel;
     StarsTrackBar: TTrackBar;
     DustTrackBar: TTrackBar;
+    VisualsTabSheet: TTabSheet;
     PROCEDURE AutoRotateCheckboxChange(Sender: TObject);
     PROCEDURE DustTrackBarChange(Sender: TObject);
     PROCEDURE FormCreate(Sender: TObject);
@@ -60,7 +67,7 @@ TYPE
     PROCEDURE IdleFunc(Sender: TObject; VAR done: boolean);
     PROCEDURE initDustButtonClick(Sender: TObject);
     PROCEDURE initFromPresetButtonClick(Sender: TObject);
-    PROCEDURE initStarsButtonClick(Sender: TObject);
+    PROCEDURE PageControl1Change(Sender: TObject);
     PROCEDURE Panel3Resize(Sender: TObject);
     PROCEDURE PointSizeTrackBarChange(Sender: TObject);
     PROCEDURE resetStarsButtonClick(Sender: TObject);
@@ -71,6 +78,7 @@ TYPE
     PROCEDURE StarsTrackBarChange(Sender: TObject);
     PROCEDURE startBgCalcClick(Sender: TObject);
     PROCEDURE stopCalcButtonClick(Sender: TObject);
+    PROCEDURE TrailLengthTrackBarChange(Sender: TObject);
   private
     lastLabelUpdate:qword;
     growCount:longint;
@@ -103,14 +111,12 @@ PROCEDURE TGravityMainForm.FormCreate(Sender: TObject);
     for dim in TDustInitMode do ComboBox1.items.add(CDustInitModeName[dim]);
     ComboBox1.ItemIndex:=0;
 
-    ComboBox2.items.clear;
-    for tgt in TsysTarget do ComboBox2.items.add('Target: '+CsysTargetName[tgt]);
-    ComboBox2.ItemIndex:=0;
-    growCount:=0;
-
     ComboBox3.items.clear;
-    for i:=0 to viewState.ParticleEngine.cachedSystems.predefinedSystemCount-1 do ComboBox3.items.add('#'+intToStr(i));
+    for tgt in TsysTarget do ComboBox3.items.add('->'+CsysTargetName[tgt]);
+    for i:=0 to viewState.ParticleEngine.cachedSystems.predefinedSystemCount-1 do ComboBox3.items.add('Preset #'+intToStr(i)+' '+viewState.ParticleEngine.cachedSystems.predefinedSystemName(i));
     ComboBox3.ItemIndex:=0;
+
+    growCount:=0;
   end;
 
 PROCEDURE TGravityMainForm.FormDestroy(Sender: TObject);
@@ -189,20 +195,30 @@ PROCEDURE TGravityMainForm.initFromPresetButtonClick(Sender: TObject);
   VAR presetIndex:longint;
   begin
     presetIndex:=ComboBox3.ItemIndex;
-    if (presetIndex<0) or (presetIndex>255) then exit;
-    viewState.ParticleEngine.initPresetStars(presetIndex);
+    if presetIndex<0 then exit;
+    if presetIndex<=byte(high(TsysTarget)) then begin
+      viewState.ParticleEngine.initStars(StarsTrackBar.position,TsysTarget(presetIndex));
+    end else begin
+      dec(presetIndex,byte(high(TsysTarget))+1);
+      if presetIndex>viewState.ParticleEngine.cachedSystems.predefinedSystemCount then exit;
+      viewState.ParticleEngine.initPresetStars(presetIndex);
+    end;
     growCount:=0;
     updateGrowShrink;
   end;
 
-PROCEDURE TGravityMainForm.initStarsButtonClick(Sender: TObject);
-  VAR t,tgt:TsysTarget;
+PROCEDURE TGravityMainForm.PageControl1Change(Sender: TObject);
+  VAR i,y:longint;
+      yMax:longint=0;
   begin
-    tgt:=low(TsysTarget);
-    for t in TsysTarget do if byte(t)=ComboBox2.ItemIndex then tgt:=t;
-    viewState.ParticleEngine.initStars(StarsTrackBar.position,tgt);
-    growCount:=0;
-    updateGrowShrink;
+    for i:=0 to PageControl1.activePage.ControlCount-1 do begin
+       y:=PageControl1.activePage.Controls[i].top+
+          PageControl1.activePage.Controls[i].height+
+          PageControl1.activePage.Controls[i].BorderSpacing.Bottom.size;
+       if y>yMax then yMax:=y;
+    end;
+    PageControl1.ClientHeight:=yMax;
+    Panel1.AdjustSize;
   end;
 
 PROCEDURE TGravityMainForm.Panel3Resize(Sender: TObject);
@@ -250,6 +266,12 @@ PROCEDURE TGravityMainForm.startBgCalcClick(Sender: TObject);
 PROCEDURE TGravityMainForm.stopCalcButtonClick(Sender: TObject);
   begin
     viewState.ParticleEngine.cachedSystems.destroying:=true;
+  end;
+
+PROCEDURE TGravityMainForm.TrailLengthTrackBarChange(Sender: TObject);
+  begin
+    viewState.ParticleEngine.trajectoryMaxTime:=exp(TrailLengthTrackBar.position*ln(2)/5);
+    TrailLengthLabel.caption:='Trail length: '+floatToStrF(viewState.ParticleEngine.trajectoryMaxTime,ffFixed,3,3);
   end;
 
 CONST DUST_COUNT_TAB:array[0..80] of longint=(0,100          ,125   ,141   ,158   ,178   ,200   ,224   ,250   ,282   ,316   ,355   ,400   ,447   ,500   ,562   ,631   ,700   ,800   ,900   ,
