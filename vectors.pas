@@ -31,6 +31,10 @@ OPERATOR *(CONST x:TIntVec3; CONST y:Tfloat):TVector3;
 OPERATOR =(CONST x,y:TIntVec3):boolean;
 
 FUNCTION randomOrthonormalBasis:TMatrix3x3;
+FUNCTION orthonormalBasisOf(CONST v1,v2:TVector3):TMatrix3x3;
+FUNCTION invert(CONST m:TMatrix3x3):TMatrix3x3;
+FUNCTION transpose(CONST m:TMatrix3x3):TMatrix3x3;
+OPERATOR * (CONST A:TMatrix3x3; CONST v:TVector3):TVector3;
 
 CONST ZERO_VECTOR:TVector3=(0,0,0);
 IMPLEMENTATION
@@ -202,6 +206,59 @@ FUNCTION extractHsvChannels(CONST x:TVector3):TVector3;
     result[1]:=(result[2]-result[1])/result[2];
     while result[0]<0 do result[0]:=result[0]+1;
     while result[0]>1 do result[0]:=result[0]-1;
+  end;
+
+FUNCTION orthonormalBasisOf(CONST v1,v2:TVector3):TMatrix3x3;
+  begin
+    result[0]:=                                  v1*(1/euklideanNorm(v1));
+    result[2]:=cross(result[0],v2); result[2]*=1/euklideanNorm(result[2]);
+    result[1]:=cross(result[0],result[2]);
+  end;
+
+FUNCTION invert(CONST m:TMatrix3x3):TMatrix3x3;
+  VAR invDet:Tfloat;
+  begin
+    invDet:=(m[0,0]*m[1,1]*m[2,2]
+            +m[0,1]*m[1,2]*m[2,0]
+            +m[0,2]*m[1,0]*m[2,1]
+            -m[0,0]*m[1,2]*m[2,1]
+            -m[0,1]*m[1,0]*m[2,2]
+            -m[0,2]*m[1,1]*m[2,0]);
+    if abs(invDet)>1E-10 then begin
+      invDet:=1/invDet;
+      result[0,0]:=invDet*(m[1,1]*m[2,2]-m[1,2]*m[2,1]);
+      result[1,0]:=invDet*(m[1,2]*m[2,0]-m[1,0]*m[2,2]);
+      result[2,0]:=invDet*(m[1,0]*m[2,1]-m[1,1]*m[2,0]);
+      result[0,1]:=invDet*(m[2,1]*m[0,2]-m[2,2]*m[0,1]);
+      result[1,1]:=invDet*(m[2,2]*m[0,0]-m[2,0]*m[0,2]);
+      result[2,1]:=invDet*(m[2,0]*m[0,1]-m[2,1]*m[0,0]);
+      result[0,2]:=invDet*(m[0,1]*m[1,2]-m[0,2]*m[1,1]);
+      result[1,2]:=invDet*(m[0,2]*m[1,0]-m[0,0]*m[1,2]);
+      result[2,2]:=invDet*(m[0,0]*m[1,1]-m[0,1]*m[1,0]);
+    end else begin
+      result[0,0]:=Nan;
+      result[1,0]:=Nan;
+      result[2,0]:=Nan;
+      result[0,1]:=Nan;
+      result[1,1]:=Nan;
+      result[2,1]:=Nan;
+      result[0,2]:=Nan;
+      result[1,2]:=Nan;
+      result[2,2]:=Nan;
+    end;
+  end;
+
+FUNCTION transpose(CONST m:TMatrix3x3):TMatrix3x3;
+  VAR i,j:longint;
+  begin
+    for i:=0 to 2 do for j:=0 to 2 do result[i,j]:=m[j,i];
+  end;
+
+OPERATOR * (CONST A:TMatrix3x3; CONST v:TVector3):TVector3;
+  begin
+    result[0]:=A[0,0]*v[0]+A[0,1]*v[1]+A[0,2]*v[2];
+    result[1]:=A[1,0]*v[0]+A[1,1]*v[1]+A[1,2]*v[2];
+    result[2]:=A[2,0]*v[0]+A[2,1]*v[1]+A[2,2]*v[2];
   end;
 
 end.

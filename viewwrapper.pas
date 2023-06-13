@@ -310,9 +310,7 @@ PROCEDURE T_viewState.viewPaint(Sender: TObject);
         LastFrameTicks-=1000;
         frameCount:=0;
       end;
-
-      if tickDelta=0 then tickDelta:=round(1E3/measuredFps);
-      ParticleEngine.update(tickDelta,measuredFps<TARGET_FPS);
+      if tickDelta>0 then ParticleEngine.update(tickDelta,measuredFps<TARGET_FPS);
     end;
 
     if OpenGLControl.MakeCurrent then begin
@@ -321,12 +319,10 @@ PROCEDURE T_viewState.viewPaint(Sender: TObject);
       if smoothPoints then begin
         glEnable(  GL_POINT_SMOOTH); glHint(  GL_POINT_SMOOTH_HINT,GL_NICEST);
         glEnable(   GL_LINE_SMOOTH); glHint(   GL_LINE_SMOOTH_HINT,GL_NICEST);
-        glEnable(GL_POLYGON_SMOOTH); glHint(GL_POLYGON_SMOOTH_HINT,GL_NICEST);
         glLineWidth(2);
       end else begin
         glDisable(  GL_POINT_SMOOTH);
         glDisable(   GL_LINE_SMOOTH);
-        glDisable(GL_POLYGON_SMOOTH);
         glLineWidth(1);
       end;
 

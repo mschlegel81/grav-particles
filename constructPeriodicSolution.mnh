@@ -1,0 +1,227 @@
+
+timeStep(accelerations:List)->sqrt(1E-6/accelerations.map(::euklideanNorm).max);
+
+A(dx)->dx/dx.euklideanNorm³;
+A_(p0,p1,p2)->begin
+  local a01:=A(p1-p0);
+  local a02:=A(p2-p0);
+  local a12:=A(p2-p1);
+  [a01+a02,-a01+a12,-a02-a12];
+end;
+
+A_(p0,p1,p2,p3)->begin
+  local a01:=A(p1-p0);
+  local a02:=A(p2-p0);
+  local a03:=A(p3-p0);
+  local a12:=A(p2-p1);
+  local a13:=A(p3-p1);
+  local a23:=A(p3-p2);
+  [a01+a02+a03,
+  -a01+a12+a13,
+  -a02-a12+a23,
+  -a03-a13-a23];
+end;
+
+A_(p0,p1,p2,p3,p4)->begin
+  local a01:=A(p1-p0);
+  local a02:=A(p2-p0);
+  local a03:=A(p3-p0);
+  local a04:=A(p4-p0);
+  local a12:=A(p2-p1);
+  local a13:=A(p3-p1);
+  local a14:=A(p4-p1);
+  local a23:=A(p3-p2);
+  local a24:=A(p4-p2);
+  local a34:=A(p3-p4);
+  [       0.1*(a01+a02+a03+a04),
+  -a01*10+0.1*(+a12+a13+a14),
+  -a02*10+0.1*(-a12+a23+a24),
+  -a03*10+0.1*(-a13-a23+a34),
+  -a04*10+0.1*(-a14-a24-a34)];
+end;
+
+
+
+step(state:List(4),dtMax)->begin
+  local p:=state[0];
+  local v:=state[1];
+  local a:=state[2];
+  local dt:=max(1E-4,min(dtMax,timeStep(a)));
+  local a_:=A_@(p+=v*dt+a*(dt²*0.5));
+  v+=(a+a_)*(dt*0.5);
+  [p,v,a_,state[3]+dt];
+end;
+
+test(v:NumericList(2))->
+begin
+  local State:=[[[ 1,0,0],
+                 [-1,0,0],
+                 [ 0,0,0]],
+                [[0, v[0],-v[1]],
+                 [0,-v[0],-v[1]],
+                 [0, 0,  2*v[1]]]];
+  State|=[A_@(State[0]),0];
+  local target:=State[0,1]|State[1,1];
+  local error:=(s)->euklideanNorm((s[0,0]|s[1,0])-target);
+  local Best:=State;
+  local delta:=error(State);
+
+  while(State[3]<20,State:=step(State,0.2));
+  while(State[3]<30,begin
+    State:=step(State,0.2);
+    local newDelta:=error(State);
+    newDelta<delta ? begin
+      Best:=State;
+      delta:=newDelta;
+    end : void;
+  end);
+  delta;
+end;
+
+T0:=[ 1, 1, 1];
+T1:=[-1,-1, 1];
+T2:=[-1, 1,-1];
+T3:=[ 1,-1,-1];
+
+test4(v:NumericList(3))->
+begin
+  local State:=[[T0,
+                 T1,
+                 T2,
+                 T3],
+                [(T1-T0)*v[0]+(T2-T0)*v[1]+(T3-T0)*v[2],
+                 (T2-T1)*v[0]+(T3-T1)*v[1]+(T0-T1)*v[2],
+                 (T3-T2)*v[0]+(T0-T2)*v[1]+(T1-T2)*v[2],
+                 (T0-T3)*v[0]+(T1-T3)*v[1]+(T2-T3)*v[2]]];
+  State|=[A_@(State[0]),0];
+  local target:=State[0,0]|State[1,0];
+  local error:=(s)->euklideanNorm((s[0,0]|s[1,0])-target);
+
+  while(State[3]<20,State:=step(State,0.2));
+  local Best:=State;
+  local delta:=error(State);
+  while(State[3]<100,begin
+    State:=step(State,0.2);
+    local newDelta:=error(State);
+    newDelta<delta ? begin
+      Best:=State;
+      delta:=newDelta;
+    end : void;
+  end);
+  note(delta,' @',v);
+  delta;
+end;
+
+test4b(v:NumericList(6))->
+begin
+  local State:=[[[ 0, 1, 0],
+                 [ 0,-1, 0],
+                 [ 2, 0, 0],
+                 [-2, 0, 0]],
+                [[ v[0], v[1], v[2]],
+                 [-v[0],-v[1],-v[2]],
+                 [ v[3], v[4], v[5]],
+                 [-v[3],-v[4],-v[5]]]];
+  State|=[A_@(State[0]),0];
+  local target:=State.flatten;
+  local error:=(s)->euklideanNorm(s.flatten-target);
+
+  local delta:=-1;
+
+  while(State[3]<10 AND delta<(delta:=error(State)),State:=step(State,0.2));
+  local Best:=State;
+  while(State[3]<50,begin
+    State:=step(State,0.2);
+    (local newDelta:=error(State))<delta ? begin
+      Best:=State;
+      delta:=newDelta;
+    end : void;
+  end);
+  note(delta,' @',v,' T=',Best.trailing);
+  delta;
+end;
+
+testPlanetSys(v:NumericList(8))->begin
+  local p1:=[v[0] ,0,0];
+  local p2:=[-v[1],0,0];
+  local p3:=[0, v[2],0];
+  local p4:=[0,-v[3],0];
+  local p0:=-(p1+p2+p3+p4)*0.1/10;
+
+  local v1:=[0,v[4],0];
+  local v2:=[0,-v[5],0];
+  local v3:=[-v[6],0,0];
+  local v4:=[ v[7],0,0];
+  local v0:=-(v1+v2+v3+v4)*0.1/10;
+  local State:=[[p0,p1,p2,p3,p4],[v0,v1,v2,v3,v4]];
+  State|=[A_@(State[0]),0];
+
+  local target:=[euklideanNorm(p1),euklideanNorm(p2),euklideanNorm(p3),euklideanNorm(p4)];
+  local error:=(s)->ln([euklideanNorm(s[0,1]),euklideanNorm(s[0,2]),euklideanNorm(s[0,3]),euklideanNorm(s[0,4])]/target).abs.max;
+
+  local delta:=0;
+  while(State[3]<50,begin
+    State:=step(State,0.2);
+    delta:=max(delta,error(State));
+  end);
+  note(delta,' @',v);
+  delta;
+
+end;
+
+
+USE downhillSimplex;
+
+//testPlanetSys([2,3,5,7,1/sqrt(2),1/sqrt(3),1/sqrt(5),1/sqrt(7)]);
+//testPlanetSys([2,3,5,7,10/sqrt(2),10/sqrt(3),10/sqrt(5),10/sqrt(7)]);
+//testPlanetSys([2,3,5,7,sqrt(10)/sqrt(2),sqrt(10)/sqrt(3),sqrt(10)/sqrt(5),sqrt(10)/sqrt(7)]);
+//halt;
+
+downhillSimplex(::testPlanetSys,[2,3,5,7,sqrt(10)/sqrt(2),sqrt(10)/sqrt(3),sqrt(10)/sqrt(5),sqrt(10)/sqrt(7)],0.1,1E-6,DEFAULT_DOWNHILL_SIMPLEX_OPTIONS.withActionOnBestPoint((p)->log(p)));
+halt;
+
+
+downhillSimplex(::test4b,random(6),1,1E-6,DEFAULT_DOWNHILL_SIMPLEX_OPTIONS.withActionOnBestPoint((p)->log(p)));
+
+halt;
+downhillSimplex(::test,[0.5,1.04],0.01,1E-6,DEFAULT_DOWNHILL_SIMPLEX_OPTIONS.withActionOnBestPoint((p)->log(p)));
+
+halt;
+begin
+//  local v:=0.7;
+  local best:=[1.04121875,Inf,0];
+        best:=[1.0411651757814684,Inf,27.8003125];
+        best:=[1.0405541430223826,Inf,0];
+  local h:=    0.5;
+
+  best:=1|test(1);
+
+  local samples:=[[best[0],best[1]]];
+
+  while(true,begin
+    local v0:=best[0];
+    note('h=',h,' v0=',v0);
+    printf('v=%0.'&ceil(ln(h)/ln(0.1))&'f T=%0.6f error=%s',v0,best[2],best[1]);
+
+    [-1,1]
+    .map((i)->v0+h*i)
+    .pMap((v)->v|test(v))
+    .each(next,begin
+      samples|=[[next[0],next[1]]];
+      next[1]<best[1] ? best:=next : void;
+     end);
+    h/=2;
+    setOptions(["x0"=>-1,"x1"=>1,"y0"=>-1,"y1"=>1,"fontsize"=>10,"preserveAspect"=>false,"autoscaleX"=>true,"autoscaleY"=>true,"logscaleX"=>false,"logscaleY"=>false,"autoscaleFactor"=>1,"axisStyleX"=>7,"axisStyleY"=>7].toMap);
+    plot(samples:=samples.sort,'. l 0.8 red');
+    local medianError:=samples.getInner(1).sort[samples.size div 2];
+    note('median error= ',medianError);
+    postDisplay;
+    samples.size>5 ? begin
+      while(samples.head    [1]>medianError,samples:=samples.tail);
+      while(samples.trailing[1]>medianError,samples:=samples.leading);
+    end : void;
+  end);
+end;
+
+
+
