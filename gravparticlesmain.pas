@@ -15,6 +15,8 @@ TYPE
   TGravityMainForm = class(TForm)
     AutoRotateCheckbox: TCheckBox;
     BGTabSheet: TTabSheet;
+    PreciseDustCheckBox: TCheckBox;
+    Label4: TLabel;
     TrailLengthLabel: TLabel;
     PageControl1: TPageControl;
     Panel6: TPanel;
@@ -61,6 +63,7 @@ TYPE
     VisualsTabSheet: TTabSheet;
     PROCEDURE AutoRotateCheckboxChange(Sender: TObject);
     PROCEDURE DustTrackBarChange(Sender: TObject);
+    PROCEDURE FormCloseQuery(Sender: TObject; VAR CanClose: boolean);
     PROCEDURE FormCreate(Sender: TObject);
     PROCEDURE FormDestroy(Sender: TObject);
     PROCEDURE growButtonClick(Sender: TObject);
@@ -70,6 +73,7 @@ TYPE
     PROCEDURE PageControl1Change(Sender: TObject);
     PROCEDURE Panel3Resize(Sender: TObject);
     PROCEDURE PointSizeTrackBarChange(Sender: TObject);
+    PROCEDURE PreciseDustCheckBoxChange(Sender: TObject);
     PROCEDURE resetStarsButtonClick(Sender: TObject);
     PROCEDURE SetRecommendedDustButtonClick(Sender: TObject);
     PROCEDURE shrinkButtonClick(Sender: TObject);
@@ -80,6 +84,7 @@ TYPE
     PROCEDURE stopCalcButtonClick(Sender: TObject);
     PROCEDURE TrailLengthTrackBarChange(Sender: TObject);
   private
+    quitPosted:boolean;
     lastLabelUpdate:qword;
     growCount:longint;
     viewState:T_viewState;
@@ -104,6 +109,7 @@ PROCEDURE TGravityMainForm.FormCreate(Sender: TObject);
       tgt:TsysTarget;
       i:longint;
   begin
+    quitPosted:=false;
     lastLabelUpdate:=0;
     viewState.create(OpenGLControl1);
     Application.OnIdle:=@IdleFunc;
@@ -115,7 +121,6 @@ PROCEDURE TGravityMainForm.FormCreate(Sender: TObject);
     for tgt in TsysTarget do ComboBox3.items.add('->'+CsysTargetName[tgt]);
     for i:=0 to viewState.ParticleEngine.cachedSystems.predefinedSystemCount-1 do ComboBox3.items.add('Preset #'+intToStr(i)+' '+viewState.ParticleEngine.cachedSystems.predefinedSystemName(i));
     ComboBox3.ItemIndex:=0;
-
     growCount:=0;
   end;
 
@@ -148,6 +153,13 @@ PROCEDURE TGravityMainForm.DustTrackBarChange(Sender: TObject);
     dustLabel.caption:='Dust: '+intToStr(dustCount);
   end;
 
+PROCEDURE TGravityMainForm.FormCloseQuery(Sender: TObject; VAR CanClose: boolean);
+  begin
+    viewState.ParticleEngine.cachedSystems.destroying:=true;
+    CanClose:=viewState.ParticleEngine.cachedSystems.backgroundRunning<=0;
+    quitPosted:=true;
+  end;
+
 PROCEDURE TGravityMainForm.AutoRotateCheckboxChange(Sender: TObject);
   begin
     viewState.lockXRotation:=not(AutoRotateCheckbox.checked);
@@ -171,7 +183,7 @@ PROCEDURE TGravityMainForm.IdleFunc(Sender: TObject; VAR done: boolean);
       Checkbox3.visible:=t>=3;
       Checkbox2.visible:=t>=2;
     end;
-
+    if quitPosted and (viewState.ParticleEngine.cachedSystems.backgroundRunning=0) then close;
   end;
 
 PROCEDURE TGravityMainForm.initDustButtonClick(Sender: TObject);
@@ -232,6 +244,11 @@ PROCEDURE TGravityMainForm.Panel3Resize(Sender: TObject);
 PROCEDURE TGravityMainForm.PointSizeTrackBarChange(Sender: TObject);
   begin
     viewState.pointSize:=PointSizeTrackBar.position*0.1;
+  end;
+
+PROCEDURE TGravityMainForm.PreciseDustCheckBoxChange(Sender: TObject);
+  begin
+    viewState.ParticleEngine.precisionFocused:=PreciseDustCheckBox.checked;
   end;
 
 PROCEDURE TGravityMainForm.resetStarsButtonClick(Sender: TObject);

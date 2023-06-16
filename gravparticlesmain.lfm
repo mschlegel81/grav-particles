@@ -9,6 +9,7 @@ object GravityMainForm: TGravityMainForm
   Color = 3158064
   DoubleBuffered = False
   Font.Color = 14145495
+  OnCloseQuery = FormCloseQuery
   OnCreate = FormCreate
   OnDestroy = FormDestroy
   ParentDoubleBuffered = False
@@ -24,12 +25,12 @@ object GravityMainForm: TGravityMainForm
   end
   object Panel1: TPanel
     Left = 0
-    Height = 352
+    Height = 373
     Top = 0
     Width = 239
     AutoSize = True
     BevelOuter = bvNone
-    ClientHeight = 352
+    ClientHeight = 373
     ClientWidth = 239
     TabOrder = 1
     object FPS_LABEL: TLabel
@@ -41,7 +42,7 @@ object GravityMainForm: TGravityMainForm
       AnchorSideBottom.Side = asrBottom
       Left = 179
       Height = 15
-      Top = 334
+      Top = 355
       Width = 57
       Anchors = [akTop, akRight]
       BorderSpacing.Top = 3
@@ -58,7 +59,7 @@ object GravityMainForm: TGravityMainForm
       AnchorSideBottom.Side = asrBottom
       Left = 3
       Height = 15
-      Top = 334
+      Top = 355
       Width = 64
       BorderSpacing.Left = 3
       BorderSpacing.Top = 3
@@ -69,7 +70,7 @@ object GravityMainForm: TGravityMainForm
     object PageControl1: TPageControl
       AnchorSideBottom.Control = FPS_LABEL
       Left = 0
-      Height = 331
+      Height = 352
       Top = 0
       Width = 239
       ActivePage = SimulationTabSheet
@@ -80,7 +81,7 @@ object GravityMainForm: TGravityMainForm
       OnChange = PageControl1Change
       object SimulationTabSheet: TTabSheet
         Caption = 'Simulation'
-        ClientHeight = 300
+        ClientHeight = 321
         ClientWidth = 231
         object Panel2: TPanel
           AnchorSideLeft.Control = SimulationTabSheet
@@ -299,7 +300,7 @@ object GravityMainForm: TGravityMainForm
           AnchorSideRight.Control = SimulationTabSheet
           AnchorSideRight.Side = asrBottom
           Left = 3
-          Height = 141
+          Height = 160
           Top = 159
           Width = 225
           Anchors = [akTop, akLeft, akRight]
@@ -310,7 +311,7 @@ object GravityMainForm: TGravityMainForm
           BevelColor = 8750469
           BevelOuter = bvLowered
           BorderWidth = 1
-          ClientHeight = 141
+          ClientHeight = 160
           ClientWidth = 225
           TabOrder = 2
           object dustLabel: TLabel
@@ -377,11 +378,11 @@ object GravityMainForm: TGravityMainForm
           end
           object Label2: TLabel
             AnchorSideLeft.Control = Panel4
-            AnchorSideTop.Control = ComboBox1
-            AnchorSideTop.Side = asrBottom
+            AnchorSideTop.Control = CheckBox1
+            AnchorSideTop.Side = asrCenter
             Left = 5
             Height = 15
-            Top = 89
+            Top = 91
             Width = 52
             BorderSpacing.Left = 3
             BorderSpacing.Top = 3
@@ -504,11 +505,38 @@ object GravityMainForm: TGravityMainForm
             OnClick = SetRecommendedDustButtonClick
             TabOrder = 1
           end
+          object PreciseDustCheckBox: TCheckBox
+            AnchorSideLeft.Control = Label4
+            AnchorSideLeft.Side = asrBottom
+            AnchorSideTop.Control = initDustButton
+            AnchorSideTop.Side = asrBottom
+            Left = 172
+            Height = 19
+            Top = 139
+            Width = 20
+            BorderSpacing.Left = 3
+            BorderSpacing.Top = 3
+            OnChange = PreciseDustCheckBoxChange
+            TabOrder = 9
+          end
+          object Label4: TLabel
+            AnchorSideLeft.Control = Panel4
+            AnchorSideTop.Control = PreciseDustCheckBox
+            AnchorSideTop.Side = asrCenter
+            Left = 5
+            Height = 15
+            Top = 141
+            Width = 164
+            BorderSpacing.Left = 3
+            BorderSpacing.Top = 3
+            Caption = '(More) Precise dust simulation:'
+            ParentColor = False
+          end
         end
       end
       object VisualsTabSheet: TTabSheet
         Caption = 'Visuals'
-        ClientHeight = 300
+        ClientHeight = 321
         ClientWidth = 231
         object AutoRotateLabel: TLabel
           AnchorSideLeft.Control = AutoRotateCheckbox
@@ -662,11 +690,11 @@ object GravityMainForm: TGravityMainForm
             Height = 25
             Top = 17
             Width = 215
-            Frequency = 10
+            Frequency = 5
             Max = 50
             OnChange = TrailLengthTrackBarChange
-            PageSize = 10
-            Position = 10
+            PageSize = 5
+            Position = 20
             ShowSelRange = False
             Anchors = [akTop, akLeft, akRight]
             BorderSpacing.Left = 3
@@ -678,7 +706,7 @@ object GravityMainForm: TGravityMainForm
       end
       object BGTabSheet: TTabSheet
         Caption = 'BG'
-        ClientHeight = 300
+        ClientHeight = 321
         ClientWidth = 231
         object stopCalcButton: TButton
           AnchorSideLeft.Control = BGTabSheet
