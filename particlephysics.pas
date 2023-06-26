@@ -120,6 +120,7 @@ TYPE
     lastStarTimeStep:Tfloat;
     dust :  array of TParticle;
     removalCounter:longint;
+    sqrSystemRadius:double;
     PROCEDURE MoveParticles(CONST dt:Tfloat; CONST stressed:boolean);
   public
     cachedSystems:TCachedSystems;
@@ -1252,11 +1253,16 @@ PROCEDURE TParticleEngine.MoveParticles(CONST dt: Tfloat; CONST stressed:boolean
         end;
       end;
 
+    VAR toleranceFactor:Tfloat;
+        totalSqrMass:double=0;
     begin
       for i:=0 to length(star)-1 do begin
         sqrStarRadius[i]:=sqr(star[i].radius);
-        sqrStarMass  [i]:=4*sqr(star[i].mass);
+        sqrStarMass  [i]:=sqr(star[i].mass);
+        sqrSystemRadius:=max(sqrSystemRadius,sqrEuklideanNorm(star[i].p));
+        totalSqrMass+=star[i].mass;
       end;
+      totalSqrMass*=totalSqrMass;
 
       dtHalf:=dt*0.5;
       sqrDtHalf:=dt*dtHalf;
@@ -1274,17 +1280,18 @@ PROCEDURE TParticleEngine.MoveParticles(CONST dt: Tfloat; CONST stressed:boolean
       end;
 
       for i:=0 to length(dust)-1 do with dust[i] do if not(flaggedForRemoval) then begin
+        //Remove because of collision:
         for j:=0 to length(star)-1 do begin
           flaggedForRemoval:=flaggedForRemoval or
             (sqr(p[0]-star[j].p[0])+
              sqr(p[1]-star[j].p[1])+
              sqr(p[2]-star[j].p[2])<sqrStarRadius[j]);
         end;
+        toleranceFactor:=1+14*sqrSystemRadius/sqrEuklideanNorm(p);
 
         if not(flaggedForRemoval) and (removalFactor>random) then begin
-          gravitationallyBound:=false;
-          for j:=0 to length(star)-1 do gravitationallyBound:=gravitationallyBound or (sqr(sqrEuklideanNorm(v-star[j].v))* sqrEuklideanNorm(p-star[j].p)<sqrStarMass[j])
-                                                                                   or ((v-star[j].v)*(p-star[j].p)<0);
+          gravitationallyBound:=                                                      (sqr(sqrEuklideanNorm(v          ))* sqrEuklideanNorm(p          )<toleranceFactor*totalSqrMass);
+          for j:=0 to length(star)-1 do gravitationallyBound:=gravitationallyBound or (sqr(sqrEuklideanNorm(v-star[j].v))* sqrEuklideanNorm(p-star[j].p)<toleranceFactor*sqrStarMass[j]);
           if not(gravitationallyBound) then flaggedForRemoval:=true;
         end;
         if flaggedForRemoval
@@ -1758,8 +1765,10 @@ PROCEDURE TParticleEngine.initStars(CONST sys: TStarSys);
   begin
     setLength(star,sys.starCount);
     setLength(trStar,0);
+    sqrSystemRadius:=0;
     for k:=0 to length(star)-1 do begin
       star[k]:=sys.star[k];
+      star[k].a:=ZERO_VECTOR;
       for i:=0 to k-1 do begin
         acc:=accelFactor(star[k].p,star[i].p);
         star[k].a+=acc*star[i].mass;

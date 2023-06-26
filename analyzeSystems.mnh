@@ -47,8 +47,8 @@ parseSystem(line:String)->begin
    STARS=>stars.sort((s)->-s['mass']).canonicalSystem].toMap;
 end;
 
-//memoized allSystems->fileLines('gravity.cached_sys.txt').pMap(::parseSystem).toList;
-memoized allSystems->fileLines('gravity_debug.cached_sys.txt').pMap(::parseSystem).toList;
+memoized allSystems->fileLines('gravity.cached_sys.txt').pMap(::parseSystem).toList;
+//memoized allSystems->fileLines('gravity_debug.cached_sys.txt').pMap(::parseSystem).toList;
 
 massRatio(sys:Map)->begin
   local masses:=sys[STARS].getInner('mass');
@@ -64,6 +64,6 @@ qualityHistograms->begin
   .each(G,addPlot(G[1]));
 end;
 
-qualityHistograms;
+main->qualityHistograms;
 
-allSystems.filter((s)->s[SIZE]=3 AND s[QUALITY]>=1000);
+
