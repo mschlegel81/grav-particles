@@ -153,7 +153,6 @@ CONST minTimeStep=1E-6;
 FUNCTION dtOf(CONST aSqrMax:double):double;
   begin
     result:=sqrt(1E-6/sqrt(aSqrMax));
-//    writeln('A=',aSqrMax);
     if result>maxTimeStep then result:=maxTimeStep;
     if result<minTimeStep then result:=minTimeStep;
   end;
@@ -214,7 +213,9 @@ DESTRUCTOR TCachedSystems.destroy;
     enterCriticalSection(sysCs);
     writeStatistics;
     saveToFile(ChangeFileExt(paramStr(0),'.cached_sys'));
+    {$ifdef debugMode}
     writeDetails;
+    {$endif}
     leaveCriticalSection(sysCs);
     doneCriticalSection(sysCs);
   end;
